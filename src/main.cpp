@@ -6,10 +6,10 @@
 #include <cmath>
 #include <ctime>
 
+#include "Texture.h"
 #include "Shader_Loader.h"
 #include "Render_Utils.h"
 #include "Camera.h"
-
 
 #include "Box.cpp"
 
@@ -17,25 +17,29 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 
-
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
 GLuint program;
 GLuint programSun;
+GLuint programSunTex;
+GLuint programTex;
+GLuint texSun, texMercury, texVenus, texEarth, texMars;
+GLuint statekProc;
 Core::Shader_Loader shaderLoader;
 
-
-Core::RenderContext armContext;
-std::vector<Core::Node> arm;
-int ballIndex;
-
+obj::Model shipModel;
+obj::Model sphereModel;
+Core::RenderContext shipContext;
+Core::RenderContext sphereContext;
+Core::RenderContext saturnContext;
 
 float cameraAngle = 0;
 glm::vec3 cameraPos = glm::vec3(-6, 0, 0);
 glm::vec3 cameraDir;
 
 glm::mat4 cameraMatrix, perspectiveMatrix;
+
 
 void keyboard(unsigned char key, int x, int y)
 {
@@ -63,17 +67,57 @@ glm::mat4 createCameraMatrix()
 	return Core::createViewMatrix(cameraPos, cameraDir, up);
 }
 
-void drawObject(GLuint program, Core::RenderContext context, glm::mat4 modelMatrix, glm::vec3 color)
+void drawObject(Core::RenderContext context, glm::mat4 modelMatrix, glm::vec3 color, GLuint program)
 {
+	glUseProgram(program);
 	glUniform3f(glGetUniformLocation(program, "objectColor"), color.x, color.y, color.z);
 
 	glm::mat4 transformation = perspectiveMatrix * cameraMatrix * modelMatrix;
 
-
-	glUniformMatrix4fv(glGetUniformLocation(program, "modelMatrix"), 1, GL_FALSE, (float*)&modelMatrix);
 	glUniformMatrix4fv(glGetUniformLocation(program, "transformation"), 1, GL_FALSE, (float*)&transformation);
+	glUniformMatrix4fv(glGetUniformLocation(program, "modelMatrix"), 1, GL_FALSE, (float*)&modelMatrix);
 
 	Core::DrawContext(context);
+	glUseProgram(0);
+}
+
+void drawObjectTexture(Core::RenderContext context, glm::mat4 modelMatrix, GLuint textureID, GLuint program)
+{
+	glUseProgram(program);
+
+	Core::SetActiveTexture(textureID, "colorTexture", program, 0);
+
+	glm::mat4 transformation = perspectiveMatrix * cameraMatrix * modelMatrix;
+	glUniformMatrix4fv(glGetUniformLocation(program, "transformation"), 1, GL_FALSE, (float*)&transformation);
+	glUniformMatrix4fv(glGetUniformLocation(program, "modelMatrix"), 1, GL_FALSE, (float*)&modelMatrix);
+
+	Core::DrawContext(context);
+	glUseProgram(0);
+}
+
+glm::mat4 orbitalSpeed(float angle)
+{
+	float time = glutGet(GLUT_ELAPSED_TIME) / 10000.0f;
+
+	glm::mat4 rotation;
+	rotation = glm::rotate(rotation, time * glm::radians(angle), glm::vec3(0.0f, 1.0f, 0.0f));
+
+	return rotation;
+}
+
+glm::mat4 scaling(float size)
+{
+	glm::mat4 scal = glm::scale(glm::vec3(size, size, size));
+	return scal;
+}
+
+glm::mat4 moonRotation(float angle, float deviation)
+{
+	float time = glutGet(GLUT_ELAPSED_TIME) / 1000.0f;
+	glm::mat4 rotation;
+	rotation = glm::rotate(rotation, time * glm::radians(angle), glm::vec3(0.0f, 0.1f, deviation));
+
+	return rotation;
 }
 
 void renderScene()
@@ -88,30 +132,62 @@ void renderScene()
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glClearColor(0.0f, 0.3f, 0.3f, 1.0f);
 
-	glUseProgram(program);
+	// Macierz statku "przyczpeia" go do kamery.
+	glm::mat4 shipModelMatrix = glm::translate(cameraPos + cameraDir * 0.5f + glm::vec3(0, -0.25f, 0)) * glm::rotate(-cameraAngle + glm::radians(90.0f), glm::vec3(0, 1, 0)) * glm::scale(glm::vec3(0.25f));
 
-	// Macierz statku "przyczpeia" go do kamery. Wrato przeanalizowac te linijke i zrozumiec jak to dziala.
-	glm::vec3 lightPos = glm::vec3(-4, 1, -4);
-	//glUniform3f(glGetUniformLocation(program, "light_dir"), 2, 1, 0);
-	glUniform3f(glGetUniformLocation(program, "lightPos"), lightPos.x, lightPos.y, lightPos.z);
+	glUseProgram(program);
+	glUniform3f(glGetUniformLocation(program, "lightPos"), 0, 0, 0);
 	glUniform3f(glGetUniformLocation(program, "cameraPos"), cameraPos.x, cameraPos.y, cameraPos.z);
 
+	glUseProgram(programTex);
+	glUniform3f(glGetUniformLocation(programTex, "lightPos"), 0, 0, 0);
+	glUniform3f(glGetUniformLocation(programTex, "cameraPos"), cameraPos.x, cameraPos.y, cameraPos.z);
 
-	glUseProgram(0);
+	glUseProgram(statekProc);
+	glUniform3f(glGetUniformLocation(statekProc, "lightPos"), 0, 0, 0);
+	glUniform3f(glGetUniformLocation(statekProc, "cameraPos"), cameraPos.x, cameraPos.y, cameraPos.z);
+
+	glUseProgram(programSun);
+	glUniform3f(glGetUniformLocation(programSun, "cameraPos"), cameraPos.x, cameraPos.y, cameraPos.z);
+
+	drawObject(shipContext, shipModelMatrix, glm::vec3(0.6f), statekProc);
+
+	// Sun
+	drawObject(sphereContext, glm::translate(glm::vec3(0, 0, 0)) * glm::scale(glm::vec3(0.95, 0.95, 0.95)), glm::vec3(0.9, 0.7, 0.1), programSun);
+	// Mercury
+	drawObjectTexture(sphereContext, orbitalSpeed(300) * glm::translate(glm::vec3(1.5f, 0.f, 0.f)) * scaling(0.20), texMercury, programTex);
+	// Venus
+	drawObjectTexture(sphereContext, orbitalSpeed(150) * glm::translate(glm::vec3(2.f, 0.f, 0.f)) * scaling(0.30), texVenus, programTex);
+	// Earth
+	drawObjectTexture(sphereContext, orbitalSpeed(120) * glm::translate(glm::vec3(3.0f, 0.f, 0.f)) * scaling(0.35), texEarth, programTex);
+	// Moon
+	drawObject(sphereContext, orbitalSpeed(120) * glm::translate(glm::vec3(3.0f, 0.f, 0.f)) * moonRotation(65, 0.005) * glm::translate(glm::vec3(0.5f, 0.f, 0.f)) * scaling(0.05), glm::vec3(0.3), program);
+
 	glutSwapBuffers();
 }
 
 void init()
 {
 	glEnable(GL_DEPTH_TEST);
-	program = shaderLoader.CreateProgram("shaders/shader_4_1.vert", "shaders/shader_4_1.frag");
-	programSun = shaderLoader.CreateProgram("shaders/shader_4_sun.vert", "shaders/shader_4_sun.frag");
-
+	program = shaderLoader.CreateProgram("shaders/shader.vert", "shaders/shader.frag");
+	programSun = shaderLoader.CreateProgram("shaders/shader_sun.vert", "shaders/shader_sun.frag");
+	programTex = shaderLoader.CreateProgram("shaders/shader_tex.vert", "shaders/shader_tex.frag");
+	statekProc = shaderLoader.CreateProgram("shaders/shader_proc_tex.vert", "shaders/shader_proc_tex.frag");
+	texEarth = Core::LoadTexture("textures/earth2.png");
+	texMercury = Core::LoadTexture("textures/mercury.png");
+	texVenus = Core::LoadTexture("textures/venus.png");
+	sphereModel = obj::loadModelFromFile("models/sphere.obj");
+	shipModel = obj::loadModelFromFile("models/spaceship.obj");
+	shipContext.initFromOBJ(shipModel);
+	sphereContext.initFromOBJ(sphereModel);
 }
 
 void shutdown()
 {
 	shaderLoader.DeleteProgram(program);
+	shaderLoader.DeleteProgram(programSunTex);
+	shaderLoader.DeleteProgram(programTex);
+	shaderLoader.DeleteProgram(statekProc);
 }
 
 void idle()
@@ -123,9 +199,9 @@ int main(int argc, char** argv)
 {
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
-	glutInitWindowPosition(200, 300);
+	glutInitWindowPosition(0, 0);
 	glutInitWindowSize(600, 600);
-	glutCreateWindow("OpenGL Pierwszy Program");
+	glutCreateWindow("OpenGL project");
 	glewInit();
 
 	init();
