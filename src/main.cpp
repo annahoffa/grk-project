@@ -37,8 +37,11 @@ Core::RenderContext saturnContext;
 float cameraAngle = 0;
 glm::vec3 cameraPos = glm::vec3(-6, 0, 0);
 glm::vec3 cameraDir;
-
 glm::mat4 cameraMatrix, perspectiveMatrix;
+
+// variables for fps check
+int myframe;
+long mytime, mytimebase;
 
 
 void keyboard(unsigned char key, int x, int y)
@@ -163,6 +166,17 @@ void renderScene()
 	// Moon
 	drawObject(sphereContext, orbitalSpeed(120) * glm::translate(glm::vec3(3.0f, 0.f, 0.f)) * moonRotation(65, 0.005) * glm::translate(glm::vec3(0.5f, 0.f, 0.f)) * scaling(0.05), glm::vec3(0.3), program);
 
+	/*
+	// Code to check fps (simply uncomment to use)
+	myframe++;
+	time = glutGet(GLUT_ELAPSED_TIME);
+	if (time - mytimebase > 1000) {
+		printf("FPS:%4.2f\n", myframe * 1000.0 / (time - mytimebase));
+		mytimebase = time;
+		myframe = 0;
+	}
+	*/
+
 	glutSwapBuffers();
 }
 
@@ -190,9 +204,16 @@ void shutdown()
 	shaderLoader.DeleteProgram(statekProc);
 }
 
+/*
 void idle()
 {
 	glutPostRedisplay();
+}
+*/
+
+void timer(int) {
+	glutPostRedisplay();
+	glutTimerFunc(1000 / 60, timer, 0);
 }
 
 int main(int argc, char** argv)
@@ -207,7 +228,8 @@ int main(int argc, char** argv)
 	init();
 	glutKeyboardFunc(keyboard);
 	glutDisplayFunc(renderScene);
-	glutIdleFunc(idle);
+	//glutIdleFunc(idle);	// CPU usage goes up to ~99% with this; new solution below
+	timer(0);				// restricts program to ~60 fps
 
 	glutMainLoop();
 
