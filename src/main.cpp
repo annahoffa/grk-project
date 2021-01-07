@@ -10,7 +10,6 @@
 #include "Shader_Loader.h"
 #include "Render_Utils.h"
 #include "Camera.h"
-
 #include "Box.cpp"
 
 #include <assimp/Importer.hpp>
@@ -20,6 +19,10 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
+int mainWindow;
+float windowWidth = 600.0;
+float windowHeight = 600.0;
+
 GLuint program;
 GLuint programSun;
 GLuint programSunTex;
@@ -27,7 +30,6 @@ GLuint programTex;
 GLuint texSun, texMercury, texVenus, texEarth, texMars;
 GLuint statekProc;
 Core::Shader_Loader shaderLoader;
-
 obj::Model shipModel;
 obj::Model sphereModel;
 Core::RenderContext shipContext;
@@ -36,8 +38,17 @@ Core::RenderContext saturnContext;
 
 float cameraAngle = 0;
 glm::vec3 cameraPos = glm::vec3(-6, 0, 0);
-glm::vec3 cameraDir;
+glm::vec3 cameraDir; // Wektor "do przodu" kamery
+glm::vec3 cameraSide; // Wektor "w bok" kamery
 glm::mat4 cameraMatrix, perspectiveMatrix;
+
+// grk7 - quaternions and camera movement
+glm::vec3 lightDir = glm::normalize(glm::vec3(1.0f, -0.9f, -1.0f));
+glm::quat rotation = glm::quat(1.f, 0.f, 0.f, 0.f);
+float lastX = windowWidth / 2.0;
+float lastY = windowHeight / 2.0;
+float lastZ = 0.0;
+float xOffset, yOffset;
 
 // variables for fps check
 int myframe;
@@ -46,12 +57,12 @@ long mytime, mytimebase;
 
 void keyboard(unsigned char key, int x, int y)
 {
-	float angleSpeed = 0.1f;
+	float angleSpeed = 2.0f;
 	float moveSpeed = 0.1f;
 	switch (key)
 	{
-	case 'z': cameraAngle -= angleSpeed; break;
-	case 'x': cameraAngle += angleSpeed; break;
+	case 'z': lastZ -= angleSpeed; break;
+	case 'x': lastZ += angleSpeed; break;
 	case 'w': cameraPos += cameraDir * moveSpeed; break;
 	case 's': cameraPos -= cameraDir * moveSpeed; break;
 	case 'd': cameraPos += glm::cross(cameraDir, glm::vec3(0, 1, 0)) * moveSpeed; break;
@@ -61,14 +72,39 @@ void keyboard(unsigned char key, int x, int y)
 	}
 }
 
+void mouse(int x, int y)
+{
+	const float mouseSensitivity = 1.0f;
+	xOffset = (x - lastX) * mouseSensitivity;
+	yOffset = (y - lastY) * mouseSensitivity;
+	lastX = x;
+	lastY = y;
+}
+
+glm::mat4 createCameraMatrix(float xOffset, float yOffset)
+{
+	glm::quat xAxisQuaternion = glm::angleAxis(glm::radians(xOffset), glm::vec3(0, 1, 0));
+	glm::quat yAxisQuaternion = glm::angleAxis(glm::radians(yOffset), glm::vec3(1, 0, 0));
+	glm::quat rotationChange = yAxisQuaternion * xAxisQuaternion;
+
+	rotation = glm::normalize(rotationChange * rotation);
+	cameraDir = glm::inverse(rotation) * glm::vec3(0, 0, -1);
+	cameraSide = glm::inverse(rotation) * glm::vec3(1, 0, 0);
+
+	glutWarpPointer(windowWidth / 2, windowHeight / 2);	// kursor nie wychodzi poza okno; w zamian niestety zmniejsza to plynnosc kamery
+
+	return Core::createViewMatrixQuat(cameraPos, rotation);
+}
+
+/*
 glm::mat4 createCameraMatrix()
 {
 	// Obliczanie kierunku patrzenia kamery (w plaszczyznie x-z) przy uzyciu zmiennej cameraAngle kontrolowanej przez klawisze.
 	cameraDir = glm::vec3(cosf(cameraAngle), 0.0f, sinf(cameraAngle));
 	glm::vec3 up = glm::vec3(0, 1, 0);
-
 	return Core::createViewMatrix(cameraPos, cameraDir, up);
 }
+*/
 
 void drawObject(Core::RenderContext context, glm::mat4 modelMatrix, glm::vec3 color, GLuint program)
 {
@@ -87,7 +123,6 @@ void drawObject(Core::RenderContext context, glm::mat4 modelMatrix, glm::vec3 co
 void drawObjectTexture(Core::RenderContext context, glm::mat4 modelMatrix, GLuint textureID, GLuint program)
 {
 	glUseProgram(program);
-
 	Core::SetActiveTexture(textureID, "colorTexture", program, 0);
 
 	glm::mat4 transformation = perspectiveMatrix * cameraMatrix * modelMatrix;
@@ -125,18 +160,18 @@ glm::mat4 moonRotation(float angle, float deviation)
 
 void renderScene()
 {
-	// Aktualizacja macierzy widoku i rzutowania. Macierze sa przechowywane w zmiennych globalnych, bo uzywa ich funkcja drawObject.
-	// (Bardziej elegancko byloby przekazac je jako argumenty do funkcji, ale robimy tak dla uproszczenia kodu.
-	//  Jest to mozliwe dzieki temu, ze macierze widoku i rzutowania sa takie same dla wszystkich obiektow!)
-	cameraMatrix = createCameraMatrix();
+	cameraMatrix = createCameraMatrix(xOffset, yOffset);
 	perspectiveMatrix = Core::createPerspectiveMatrix();
+
 	float time = glutGet(GLUT_ELAPSED_TIME) / 1000.f;
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glClearColor(0.0f, 0.3f, 0.3f, 1.0f);
 
 	// Macierz statku "przyczpeia" go do kamery.
-	glm::mat4 shipModelMatrix = glm::translate(cameraPos + cameraDir * 0.5f + glm::vec3(0, -0.25f, 0)) * glm::rotate(-cameraAngle + glm::radians(90.0f), glm::vec3(0, 1, 0)) * glm::scale(glm::vec3(0.25f));
+	//glm::mat4 shipModelMatrix = glm::translate(cameraPos + cameraDir * 0.5f + glm::vec3(0, -0.25f, 0)) * glm::rotate(-cameraAngle + glm::radians(90.0f), glm::vec3(0, 1, 0)) * glm::scale(glm::vec3(0.25f));
+	glm::mat4 shipInitialTransformation = glm::translate(glm::vec3(0, -0.25f, 0)) * glm::rotate(glm::radians(180.0f), glm::vec3(0, 1, 0)) * glm::rotate(glm::radians(lastZ), glm::vec3(0, 0, 1)) * glm::scale(glm::vec3(0.25f));
+	glm::mat4 shipModelMatrix = glm::translate(cameraPos + cameraDir * 0.5f) * glm::mat4_cast(glm::inverse(rotation)) * shipInitialTransformation;
 
 	glUseProgram(program);
 	glUniform3f(glGetUniformLocation(program, "lightPos"), 0, 0, 0);
@@ -221,12 +256,14 @@ int main(int argc, char** argv)
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
 	glutInitWindowPosition(0, 0);
-	glutInitWindowSize(600, 600);
+	glutInitWindowSize(windowWidth, windowHeight);
 	glutCreateWindow("OpenGL project");
 	glewInit();
 
 	init();
 	glutKeyboardFunc(keyboard);
+	glutPassiveMotionFunc(mouse);
+	glutSetCursor(GLUT_CURSOR_NONE);
 	glutDisplayFunc(renderScene);
 	//glutIdleFunc(idle);	// CPU usage goes up to ~99% with this; new solution below
 	timer(0);				// restricts program to ~60 fps
