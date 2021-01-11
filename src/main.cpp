@@ -45,9 +45,7 @@ glm::mat4 cameraMatrix, perspectiveMatrix;
 // grk7 - quaternions and camera movement
 glm::vec3 lightDir = glm::normalize(glm::vec3(1.0f, -0.9f, -1.0f));
 glm::quat rotation = glm::quat(1.f, 0.f, 0.f, 0.f);
-float lastX = windowWidth / 2.0;
-float lastY = windowHeight / 2.0;
-float lastZ = 0.0;
+float zOffset = 0.0;
 float xOffset, yOffset;
 
 // variables for fps check
@@ -61,8 +59,8 @@ void keyboard(unsigned char key, int x, int y)
 	float moveSpeed = 0.1f;
 	switch (key)
 	{
-	case 'z': lastZ -= angleSpeed; break;
-	case 'x': lastZ += angleSpeed; break;
+	case 'z': zOffset -= angleSpeed; break;
+	case 'x': zOffset += angleSpeed; break;
 	case 'w': cameraPos += cameraDir * moveSpeed; break;
 	case 's': cameraPos -= cameraDir * moveSpeed; break;
 	case 'd': cameraPos += glm::cross(cameraDir, glm::vec3(0, 1, 0)) * moveSpeed; break;
@@ -75,10 +73,8 @@ void keyboard(unsigned char key, int x, int y)
 void mouse(int x, int y)
 {
 	const float mouseSensitivity = 1.0f;
-	xOffset = (x - lastX) * mouseSensitivity;
-	yOffset = (y - lastY) * mouseSensitivity;
-	lastX = x;
-	lastY = y;
+	xOffset = (x - (windowWidth / 2)) * mouseSensitivity;
+	yOffset = (y - (windowHeight / 2)) * mouseSensitivity;
 }
 
 glm::mat4 createCameraMatrix(float xOffset, float yOffset)
@@ -170,7 +166,7 @@ void renderScene()
 
 	// Macierz statku "przyczpeia" go do kamery.
 	//glm::mat4 shipModelMatrix = glm::translate(cameraPos + cameraDir * 0.5f + glm::vec3(0, -0.25f, 0)) * glm::rotate(-cameraAngle + glm::radians(90.0f), glm::vec3(0, 1, 0)) * glm::scale(glm::vec3(0.25f));
-	glm::mat4 shipInitialTransformation = glm::translate(glm::vec3(0, -0.25f, 0)) * glm::rotate(glm::radians(180.0f), glm::vec3(0, 1, 0)) * glm::rotate(glm::radians(lastZ), glm::vec3(0, 0, 1)) * glm::scale(glm::vec3(0.25f));
+	glm::mat4 shipInitialTransformation = glm::translate(glm::vec3(0, -0.25f, 0)) * glm::rotate(glm::radians(180.0f), glm::vec3(0, 1, 0)) * glm::rotate(glm::radians(zOffset), glm::vec3(0, 0, 1)) * glm::scale(glm::vec3(0.25f));
 	glm::mat4 shipModelMatrix = glm::translate(cameraPos + cameraDir * 0.5f) * glm::mat4_cast(glm::inverse(rotation)) * shipInitialTransformation;
 
 	glUseProgram(program);
