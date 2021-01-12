@@ -53,6 +53,9 @@
     <ClCompile Include="src\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\transformations.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\stb_image.h">
@@ -80,6 +83,9 @@
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="src\model.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\transformations.h">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>

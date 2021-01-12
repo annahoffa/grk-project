@@ -11,6 +11,7 @@
 #include "Render_Utils.h"
 #include "Camera.h"
 #include "Box.cpp"
+#include "transformations.h"
 
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
@@ -87,7 +88,7 @@ glm::mat4 createCameraMatrix(float xOffset, float yOffset)
 	cameraDir = glm::inverse(rotation) * glm::vec3(0, 0, -1);
 	cameraSide = glm::inverse(rotation) * glm::vec3(1, 0, 0);
 
-	glutWarpPointer(windowWidth / 2, windowHeight / 2);	// kursor nie wychodzi poza okno; w zamian niestety zmniejsza to plynnosc kamery
+	glutWarpPointer(windowWidth / 2, windowHeight / 2);	// locks cursor inside window
 
 	return Core::createViewMatrixQuat(cameraPos, rotation);
 }
@@ -129,31 +130,6 @@ void drawObjectTexture(Core::RenderContext context, glm::mat4 modelMatrix, GLuin
 	glUseProgram(0);
 }
 
-glm::mat4 orbitalSpeed(float angle)
-{
-	float time = glutGet(GLUT_ELAPSED_TIME) / 10000.0f;
-
-	glm::mat4 rotation;
-	rotation = glm::rotate(rotation, time * glm::radians(angle), glm::vec3(0.0f, 1.0f, 0.0f));
-
-	return rotation;
-}
-
-glm::mat4 scaling(float size)
-{
-	glm::mat4 scal = glm::scale(glm::vec3(size, size, size));
-	return scal;
-}
-
-glm::mat4 moonRotation(float angle, float deviation)
-{
-	float time = glutGet(GLUT_ELAPSED_TIME) / 1000.0f;
-	glm::mat4 rotation;
-	rotation = glm::rotate(rotation, time * glm::radians(angle), glm::vec3(0.0f, 0.1f, deviation));
-
-	return rotation;
-}
-
 void renderScene()
 {
 	cameraMatrix = createCameraMatrix(xOffset, yOffset);
@@ -189,13 +165,13 @@ void renderScene()
 	// Sun
 	drawObject(sphereContext, glm::translate(glm::vec3(0, 0, 0)) * glm::scale(glm::vec3(0.95, 0.95, 0.95)), glm::vec3(0.9, 0.7, 0.1), programSun);
 	// Mercury
-	drawObjectTexture(sphereContext, orbitalSpeed(300) * glm::translate(glm::vec3(1.5f, 0.f, 0.f)) * scaling(0.20), texMercury, programTex);
+	drawObjectTexture(sphereContext, T::orbitalSpeed(300) * glm::translate(glm::vec3(1.5f, 0.f, 0.f)) * T::scaling(0.20), texMercury, programTex);
 	// Venus
-	drawObjectTexture(sphereContext, orbitalSpeed(150) * glm::translate(glm::vec3(2.f, 0.f, 0.f)) * scaling(0.30), texVenus, programTex);
+	drawObjectTexture(sphereContext, T::orbitalSpeed(150) * glm::translate(glm::vec3(2.f, 0.f, 0.f)) * T::scaling(0.30), texVenus, programTex);
 	// Earth
-	drawObjectTexture(sphereContext, orbitalSpeed(120) * glm::translate(glm::vec3(3.0f, 0.f, 0.f)) * scaling(0.35), texEarth, programTex);
+	drawObjectTexture(sphereContext, T::orbitalSpeed(120) * glm::translate(glm::vec3(3.0f, 0.f, 0.f)) * T::scaling(0.35), texEarth, programTex);
 	// Moon
-	drawObject(sphereContext, orbitalSpeed(120) * glm::translate(glm::vec3(3.0f, 0.f, 0.f)) * moonRotation(65, 0.005) * glm::translate(glm::vec3(0.5f, 0.f, 0.f)) * scaling(0.05), glm::vec3(0.3), program);
+	drawObject(sphereContext, T::orbitalSpeed(120) * glm::translate(glm::vec3(3.0f, 0.f, 0.f)) * T::moonRotation(65, 0.005) * glm::translate(glm::vec3(0.5f, 0.f, 0.f)) * T::scaling(0.05), glm::vec3(0.3), program);
 
 	/*
 	// Code to check fps (simply uncomment to use)
