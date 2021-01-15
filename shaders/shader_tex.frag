@@ -20,5 +20,6 @@ void main()
 	vec3 R = reflect(lightDir, normal);
 	float specular = pow(max(dot(V, R), 0.0), 4.0);
 	
+	// yellow-ish glow from sun:
 	gl_FragColor = vec4(objectColor * diffuse + vec3(1.0, 0.8, 0.6) * specular, 1.0);
 }

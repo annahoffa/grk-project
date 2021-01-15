@@ -28,6 +28,7 @@ GLuint program;
 GLuint programSun;
 GLuint programSunTex;
 GLuint programTex;
+GLuint programNewSun;
 GLuint texSun, texMercury, texVenus, texEarth, texMars;
 GLuint statekProc;
 Core::Shader_Loader shaderLoader;
@@ -93,16 +94,6 @@ glm::mat4 createCameraMatrix(float xOffset, float yOffset)
 	return Core::createViewMatrixQuat(cameraPos, rotation);
 }
 
-/*
-glm::mat4 createCameraMatrix()
-{
-	// Obliczanie kierunku patrzenia kamery (w plaszczyznie x-z) przy uzyciu zmiennej cameraAngle kontrolowanej przez klawisze.
-	cameraDir = glm::vec3(cosf(cameraAngle), 0.0f, sinf(cameraAngle));
-	glm::vec3 up = glm::vec3(0, 1, 0);
-	return Core::createViewMatrix(cameraPos, cameraDir, up);
-}
-*/
-
 void drawObject(Core::RenderContext context, glm::mat4 modelMatrix, glm::vec3 color, GLuint program)
 {
 	glUseProgram(program);
@@ -141,7 +132,6 @@ void renderScene()
 	glClearColor(0.0f, 0.3f, 0.3f, 1.0f);
 
 	// Macierz statku "przyczpeia" go do kamery.
-	//glm::mat4 shipModelMatrix = glm::translate(cameraPos + cameraDir * 0.5f + glm::vec3(0, -0.25f, 0)) * glm::rotate(-cameraAngle + glm::radians(90.0f), glm::vec3(0, 1, 0)) * glm::scale(glm::vec3(0.25f));
 	glm::mat4 shipInitialTransformation = glm::translate(glm::vec3(0, -0.25f, 0)) * glm::rotate(glm::radians(180.0f), glm::vec3(0, 1, 0)) * glm::rotate(glm::radians(zOffset), glm::vec3(0, 0, 1)) * glm::scale(glm::vec3(0.25f));
 	glm::mat4 shipModelMatrix = glm::translate(cameraPos + cameraDir * 0.5f) * glm::mat4_cast(glm::inverse(rotation)) * shipInitialTransformation;
 
@@ -163,7 +153,9 @@ void renderScene()
 	drawObject(shipContext, shipModelMatrix, glm::vec3(0.6f), statekProc);
 
 	// Sun
-	drawObject(sphereContext, glm::translate(glm::vec3(0, 0, 0)) * glm::scale(glm::vec3(0.95, 0.95, 0.95)), glm::vec3(0.9, 0.7, 0.1), programSun);
+	//drawObject(sphereContext, glm::translate(glm::vec3(0, 0, 0)) * glm::scale(glm::vec3(0.95, 0.95, 0.95)), glm::vec3(0.9, 0.7, 0.1), programSun);
+	//drawObjectTexture(sphereContext, glm::translate(glm::vec3(0, 0, 0)) * glm::scale(glm::vec3(0.95, 0.95, 0.95)), texSun, programTex);
+	drawObjectTexture(sphereContext, glm::translate(glm::vec3(0, 0, 0)) * glm::scale(glm::vec3(0.95, 0.95, 0.95)), texSun, programNewSun);
 	// Mercury
 	drawObjectTexture(sphereContext, T::orbitalSpeed(300) * glm::translate(glm::vec3(1.5f, 0.f, 0.f)) * T::scaling(0.20), texMercury, programTex);
 	// Venus
@@ -191,12 +183,16 @@ void init()
 {
 	glEnable(GL_DEPTH_TEST);
 	program = shaderLoader.CreateProgram("shaders/shader.vert", "shaders/shader.frag");
-	programSun = shaderLoader.CreateProgram("shaders/shader_sun.vert", "shaders/shader_sun.frag");
+	//programSun = shaderLoader.CreateProgram("shaders/shader_sun.vert", "shaders/shader_sun.frag");
+	programNewSun = shaderLoader.CreateProgram("shaders/new_sun.vert", "shaders/new_sun.frag");
 	programTex = shaderLoader.CreateProgram("shaders/shader_tex.vert", "shaders/shader_tex.frag");
 	statekProc = shaderLoader.CreateProgram("shaders/shader_proc_tex.vert", "shaders/shader_proc_tex.frag");
+
+	texSun = Core::LoadTexture("textures/sun.png");
 	texEarth = Core::LoadTexture("textures/earth2.png");
 	texMercury = Core::LoadTexture("textures/mercury.png");
 	texVenus = Core::LoadTexture("textures/venus.png");
+
 	sphereModel = obj::loadModelFromFile("models/sphere.obj");
 	shipModel = obj::loadModelFromFile("models/spaceship.obj");
 	shipContext.initFromOBJ(shipModel);
