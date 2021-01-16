@@ -28,7 +28,7 @@ GLuint program;
 GLuint programSun;
 GLuint programSunTex;
 GLuint programTex;
-GLuint texSun, texMercury, texVenus, texEarth, texMars;
+GLuint texSun, texMercury, texVenus, texEarth, texMars, texComet;
 GLuint statekProc;
 Core::Shader_Loader shaderLoader;
 obj::Model shipModel;
@@ -169,9 +169,11 @@ void renderScene()
 	// Venus
 	drawObjectTexture(sphereContext, T::orbitalSpeed(150) * glm::translate(glm::vec3(2.f, 0.f, 0.f)) * T::scaling(0.30), texVenus, programTex);
 	// Earth
-	drawObjectTexture(sphereContext, T::orbitalSpeed(120) * glm::translate(glm::vec3(3.0f, 0.f, 0.f)) * T::scaling(0.35), texEarth, programTex);
+	drawObjectTexture(sphereContext, T::orbitalSpeed(120) * glm::translate(glm::vec3(3.f, 0.f, 0.f)) * T::scaling(0.35), texEarth, programTex);
 	// Moon
-	drawObject(sphereContext, T::orbitalSpeed(120) * glm::translate(glm::vec3(3.0f, 0.f, 0.f)) * T::moonRotation(65, 0.005) * glm::translate(glm::vec3(0.5f, 0.f, 0.f)) * T::scaling(0.05), glm::vec3(0.3), program);
+	drawObject(sphereContext, T::orbitalSpeed(120) * glm::translate(glm::vec3(3.f, 0.f, 0.f)) * T::moonRotation(65, 0.005) * glm::translate(glm::vec3(0.5f, 0.f, 0.f)) * T::scaling(0.05), glm::vec3(0.3), program);
+	// Comet
+	drawObjectTexture(sphereContext, T::cometRotation(200, glm::vec3(1.f, -0.5f, 0.7f)) * glm::translate(glm::vec3(0.f, 4.f, 0.f)) * T::scaling(0.20), texComet, programTex);
 
 	/*
 	// Code to check fps (simply uncomment to use)
@@ -197,6 +199,7 @@ void init()
 	texEarth = Core::LoadTexture("textures/earth2.png");
 	texMercury = Core::LoadTexture("textures/mercury.png");
 	texVenus = Core::LoadTexture("textures/venus.png");
+	texComet = Core::LoadTexture("textures/comet.png");
 	sphereModel = obj::loadModelFromFile("models/sphere.obj");
 	shipModel = obj::loadModelFromFile("models/spaceship.obj");
 	shipContext.initFromOBJ(shipModel);
