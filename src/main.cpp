@@ -59,6 +59,7 @@ void keyboard(unsigned char key, int x, int y)
 	float moveSpeed = 0.1f;
 	switch (key)
 	{
+	case 27: exit(0);	// ESC key to exit the window
 	case 'z': zOffset -= angleSpeed; break;
 	case 'x': zOffset += angleSpeed; break;
 	case 'w': cameraPos += cameraDir * moveSpeed; break;
