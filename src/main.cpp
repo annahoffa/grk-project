@@ -10,7 +10,6 @@
 #include "Shader_Loader.h"
 #include "Render_Utils.h"
 #include "Camera.h"
-#include "Box.cpp"
 #include "transformations.h"
 
 #include <assimp/Importer.hpp>
@@ -25,10 +24,11 @@ float windowWidth = 600.0;
 float windowHeight = 600.0;
 
 GLuint program;
-GLuint programSunTex;
-GLuint programTex;
-GLuint texSun, texMercury, texVenus, texEarth, texMars, texComet;
-GLuint statekProc;
+GLuint programSunTexturing;
+GLuint programTexturing;
+GLuint textureSun, textureMercury, textureVenus, textureEarth, textureComet;
+GLuint proceduralShadingShip;
+
 Core::Shader_Loader shaderLoader;
 obj::Model shipModel;
 obj::Model sphereModel;
@@ -139,31 +139,31 @@ void renderScene()
 	glUniform3f(glGetUniformLocation(program, "lightPos"), 0, 0, 0);
 	glUniform3f(glGetUniformLocation(program, "cameraPos"), cameraPos.x, cameraPos.y, cameraPos.z);
 
-	glUseProgram(programTex);
-	glUniform3f(glGetUniformLocation(programTex, "lightPos"), 0, 0, 0);
-	glUniform3f(glGetUniformLocation(programTex, "cameraPos"), cameraPos.x, cameraPos.y, cameraPos.z);
+	glUseProgram(programTexturing);
+	glUniform3f(glGetUniformLocation(programTexturing, "lightPos"), 0, 0, 0);
+	glUniform3f(glGetUniformLocation(programTexturing, "cameraPos"), cameraPos.x, cameraPos.y, cameraPos.z);
 
-	glUseProgram(statekProc);
-	glUniform3f(glGetUniformLocation(statekProc, "lightPos"), 0, 0, 0);
-	glUniform3f(glGetUniformLocation(statekProc, "cameraPos"), cameraPos.x, cameraPos.y, cameraPos.z);
+	glUseProgram(proceduralShadingShip);
+	glUniform3f(glGetUniformLocation(proceduralShadingShip, "lightPos"), 0, 0, 0);
+	glUniform3f(glGetUniformLocation(proceduralShadingShip, "cameraPos"), cameraPos.x, cameraPos.y, cameraPos.z);
 
-	glUseProgram(programSunTex);
-	glUniform3f(glGetUniformLocation(programSunTex, "cameraPos"), cameraPos.x, cameraPos.y, cameraPos.z);
+	glUseProgram(programSunTexturing);
+	glUniform3f(glGetUniformLocation(programSunTexturing, "cameraPos"), cameraPos.x, cameraPos.y, cameraPos.z);
 
-	drawObject(shipContext, shipModelMatrix, glm::vec3(0.6f), statekProc);
+	drawObject(shipContext, shipModelMatrix, glm::vec3(0.6f), proceduralShadingShip);
 
 	// Sun
-	drawObjectTexture(sphereContext, glm::translate(glm::vec3(0, 0, 0)) * glm::scale(glm::vec3(0.95, 0.95, 0.95)), texSun, programSunTex);
+	drawObjectTexture(sphereContext, glm::translate(glm::vec3(0, 0, 0)) * glm::scale(glm::vec3(0.95, 0.95, 0.95)), textureSun, programSunTexturing);
 	// Mercury
-	drawObjectTexture(sphereContext, T::orbitalSpeed(300) * glm::translate(glm::vec3(1.5f, 0.f, 0.f)) * T::scaling(0.20), texMercury, programTex);
+	drawObjectTexture(sphereContext, T::orbitalSpeed(300) * glm::translate(glm::vec3(1.5f, 0.f, 0.f)) * T::scaling(0.20), textureMercury, programTexturing);
 	// Venus
-	drawObjectTexture(sphereContext, T::orbitalSpeed(150) * glm::translate(glm::vec3(2.f, 0.f, 0.f)) * T::scaling(0.30), texVenus, programTex);
+	drawObjectTexture(sphereContext, T::orbitalSpeed(150) * glm::translate(glm::vec3(2.f, 0.f, 0.f)) * T::scaling(0.30), textureVenus, programTexturing);
 	// Earth
-	drawObjectTexture(sphereContext, T::orbitalSpeed(120) * glm::translate(glm::vec3(3.f, 0.f, 0.f)) * T::scaling(0.35), texEarth, programTex);
+	drawObjectTexture(sphereContext, T::orbitalSpeed(120) * glm::translate(glm::vec3(3.f, 0.f, 0.f)) * T::scaling(0.35), textureEarth, programTexturing);
 	// Moon
 	drawObject(sphereContext, T::orbitalSpeed(120) * glm::translate(glm::vec3(3.f, 0.f, 0.f)) * T::moonRotation(65, 0.005) * glm::translate(glm::vec3(0.5f, 0.f, 0.f)) * T::scaling(0.05), glm::vec3(0.3), program);
 	// Comet
-	drawObjectTexture(sphereContext, T::cometRotation(200, glm::vec3(1.f, -0.5f, 0.7f)) * glm::translate(glm::vec3(0.f, 4.f, 0.f)) * T::scaling(0.20), texComet, programTex);
+	drawObjectTexture(sphereContext, T::cometRotation(200, glm::vec3(1.f, -0.5f, 0.7f)) * glm::translate(glm::vec3(0.f, 4.f, 0.f)) * T::scaling(0.20), textureComet, programTexturing);
 
 	/*
 	// Code to check fps (simply uncomment to use)
@@ -183,15 +183,15 @@ void init()
 {
 	glEnable(GL_DEPTH_TEST);
 	program = shaderLoader.CreateProgram("shaders/shader.vert", "shaders/shader.frag");
-	programSunTex = shaderLoader.CreateProgram("shaders/sun.vert", "shaders/sun.frag");
-	programTex = shaderLoader.CreateProgram("shaders/shader_tex.vert", "shaders/shader_tex.frag");
-	statekProc = shaderLoader.CreateProgram("shaders/shader_proc_tex.vert", "shaders/shader_proc_tex.frag");
+	programSunTexturing = shaderLoader.CreateProgram("shaders/sun.vert", "shaders/sun.frag");
+	programTexturing = shaderLoader.CreateProgram("shaders/shader_tex.vert", "shaders/shader_tex.frag");
+	proceduralShadingShip = shaderLoader.CreateProgram("shaders/shader_proc_tex.vert", "shaders/shader_proc_tex.frag");
 
-	texSun = Core::LoadTexture("textures/sun.png");
-	texEarth = Core::LoadTexture("textures/earth.png");
-	texMercury = Core::LoadTexture("textures/mercury.png");
-	texVenus = Core::LoadTexture("textures/venus.png");
-	texComet = Core::LoadTexture("textures/comet.png");
+	textureSun = Core::LoadTexture("textures/sun.png");
+	textureMercury = Core::LoadTexture("textures/mercury.png");
+	textureVenus = Core::LoadTexture("textures/venus.png");
+	textureEarth = Core::LoadTexture("textures/earth.png");
+	textureComet = Core::LoadTexture("textures/comet.png");
 	sphereModel = obj::loadModelFromFile("models/sphere.obj");
 	shipModel = obj::loadModelFromFile("models/spaceship.obj");
 	shipContext.initFromOBJ(shipModel);
@@ -201,9 +201,9 @@ void init()
 void shutdown()
 {
 	shaderLoader.DeleteProgram(program);
-	shaderLoader.DeleteProgram(programSunTex);
-	shaderLoader.DeleteProgram(programTex);
-	shaderLoader.DeleteProgram(statekProc);
+	shaderLoader.DeleteProgram(programSunTexturing);
+	shaderLoader.DeleteProgram(programTexturing);
+	shaderLoader.DeleteProgram(proceduralShadingShip);
 }
 
 /*
