@@ -26,12 +26,25 @@ float windowHeight = 600.0;
 GLuint program;
 GLuint programSunTexturing;
 GLuint programTexturing;
-GLuint textureSun, textureMercury, textureVenus, textureEarth, textureComet;
-GLuint proceduralShadingShip;
+GLuint programProceduralTexturing;	//  for spaceship
+GLuint programNormalmapTexturing;
 
-Core::Shader_Loader shaderLoader;
+// Objects
+obj::Model planeModel;
 obj::Model shipModel;
 obj::Model sphereModel;
+
+// Textures
+GLuint textureSun, textureMercury, textureVenus, textureEarth, textureComet;
+GLuint textureTest, textureAsteroid, textureShip;
+
+// Normal mapping
+GLuint normalmapShip;
+GLuint normalmapEarth;
+GLuint normalmapAsteroid;
+GLuint normalmapTest;
+
+Core::Shader_Loader shaderLoader;
 Core::RenderContext shipContext;
 Core::RenderContext sphereContext;
 Core::RenderContext saturnContext;
@@ -120,6 +133,31 @@ void drawObjectTexture(Core::RenderContext context, glm::mat4 modelMatrix, GLuin
 	glUseProgram(0);
 }
 
+void setUpUniforms(GLuint program, glm::mat4 modelMatrix)
+{
+	glUniform3f(glGetUniformLocation(program, "lightDir"), lightDir.x, lightDir.y, lightDir.z);
+	glUniform3f(glGetUniformLocation(program, "cameraPos"), cameraPos.x, cameraPos.y, cameraPos.z);
+
+	glm::mat4 transformation = perspectiveMatrix * cameraMatrix * modelMatrix;
+	glUniformMatrix4fv(glGetUniformLocation(program, "modelViewProjectionMatrix"), 1, GL_FALSE, (float*)&transformation);
+	glUniformMatrix4fv(glGetUniformLocation(program, "modelMatrix"), 1, GL_FALSE, (float*)&modelMatrix);
+}
+
+void drawObjectTextureWithNormalmap(Core::RenderContext context, glm::mat4 modelMatrix, GLuint textureId, GLuint normalmapId)
+{
+	GLuint program = programNormalmapTexturing;
+
+	glUseProgram(program);
+
+	setUpUniforms(program, modelMatrix);
+	Core::SetActiveTexture(textureId, "textureSampler", program, 0);
+	Core::SetActiveTexture(normalmapId, "normalSampler", program, 1);
+
+	Core::DrawContext(context);
+
+	glUseProgram(0);
+}
+
 void renderScene()
 {
 	cameraMatrix = createCameraMatrix(xOffset, yOffset);
@@ -143,14 +181,14 @@ void renderScene()
 	glUniform3f(glGetUniformLocation(programTexturing, "lightPos"), 0, 0, 0);
 	glUniform3f(glGetUniformLocation(programTexturing, "cameraPos"), cameraPos.x, cameraPos.y, cameraPos.z);
 
-	glUseProgram(proceduralShadingShip);
-	glUniform3f(glGetUniformLocation(proceduralShadingShip, "lightPos"), 0, 0, 0);
-	glUniform3f(glGetUniformLocation(proceduralShadingShip, "cameraPos"), cameraPos.x, cameraPos.y, cameraPos.z);
+	glUseProgram(programProceduralTexturing);
+	glUniform3f(glGetUniformLocation(programProceduralTexturing, "lightPos"), 0, 0, 0);
+	glUniform3f(glGetUniformLocation(programProceduralTexturing, "cameraPos"), cameraPos.x, cameraPos.y, cameraPos.z);
 
 	glUseProgram(programSunTexturing);
 	glUniform3f(glGetUniformLocation(programSunTexturing, "cameraPos"), cameraPos.x, cameraPos.y, cameraPos.z);
 
-	drawObject(shipContext, shipModelMatrix, glm::vec3(0.6f), proceduralShadingShip);
+	drawObject(shipContext, shipModelMatrix, glm::vec3(0.6f), programProceduralTexturing);
 
 	// Sun
 	drawObjectTexture(sphereContext, glm::translate(glm::vec3(0, 0, 0)) * glm::scale(glm::vec3(0.95, 0.95, 0.95)), textureSun, programSunTexturing);
@@ -159,11 +197,16 @@ void renderScene()
 	// Venus
 	drawObjectTexture(sphereContext, T::orbitalSpeed(150) * glm::translate(glm::vec3(2.f, 0.f, 0.f)) * T::scaling(0.30), textureVenus, programTexturing);
 	// Earth
-	drawObjectTexture(sphereContext, T::orbitalSpeed(120) * glm::translate(glm::vec3(3.f, 0.f, 0.f)) * T::scaling(0.35), textureEarth, programTexturing);
+	//drawObjectTexture(sphereContext, T::orbitalSpeed(120) * glm::translate(glm::vec3(3.f, 0.f, 0.f)) * T::scaling(0.35), textureEarth, programTexturing);
+	drawObjectTextureWithNormalmap(sphereContext, glm::translate(glm::vec3(0, 0, 0)), textureEarth, normalmapEarth);
 	// Moon
 	drawObject(sphereContext, T::orbitalSpeed(120) * glm::translate(glm::vec3(3.f, 0.f, 0.f)) * T::moonRotation(65, 0.005) * glm::translate(glm::vec3(0.5f, 0.f, 0.f)) * T::scaling(0.05), glm::vec3(0.3), program);
 	// Comet
 	drawObjectTexture(sphereContext, T::cometRotation(200, glm::vec3(1.f, -0.5f, 0.7f)) * glm::translate(glm::vec3(0.f, 4.f, 0.f)) * T::scaling(0.20), textureComet, programTexturing);
+
+	
+	//drawObjectTextureWithNormalmap(&planeModel, glm::translate(glm::vec3(-3, 0, 0)) * glm::scale(glm::vec3(1, 0.5, 0.5)), textureTest, normalmapTest);
+	//drawObjectTextureWithNormalmap(&planeModel, glm::translate(glm::vec3(-3, 0, 0)) * glm::scale(glm::vec3(1, 0.5, 0.5)), textureTest, normalmapTest);
 
 	/*
 	// Code to check fps (simply uncomment to use)
@@ -185,15 +228,25 @@ void init()
 	program = shaderLoader.CreateProgram("shaders/shader.vert", "shaders/shader.frag");
 	programSunTexturing = shaderLoader.CreateProgram("shaders/sun.vert", "shaders/sun.frag");
 	programTexturing = shaderLoader.CreateProgram("shaders/shader_tex.vert", "shaders/shader_tex.frag");
-	proceduralShadingShip = shaderLoader.CreateProgram("shaders/shader_proc_tex.vert", "shaders/shader_proc_tex.frag");
+	programProceduralTexturing = shaderLoader.CreateProgram("shaders/shader_proc_tex.vert", "shaders/shader_proc_tex.frag");
+	programNormalmapTexturing = shaderLoader.CreateProgram("shaders/normalmap.vert", "shaders/normalmap.frag");
+
+	sphereModel = obj::loadModelFromFile("models/sphere.obj");
+	shipModel = obj::loadModelFromFile("models/spaceship.obj");
+	planeModel = obj::loadModelFromFile("models/plane.obj");
 
 	textureSun = Core::LoadTexture("textures/sun.png");
 	textureMercury = Core::LoadTexture("textures/mercury.png");
 	textureVenus = Core::LoadTexture("textures/venus.png");
 	textureEarth = Core::LoadTexture("textures/earth.png");
 	textureComet = Core::LoadTexture("textures/comet.png");
-	sphereModel = obj::loadModelFromFile("models/sphere.obj");
-	shipModel = obj::loadModelFromFile("models/spaceship.obj");
+
+	normalmapShip = Core::LoadTexture("textures/spaceship_normals.png");
+	normalmapEarth = Core::LoadTexture("textures/earth_normals.png");
+	normalmapAsteroid = Core::LoadTexture("textures/asteroid_normals.png");
+	normalmapTest = Core::LoadTexture("textures/test_normals.png");
+
+	// po co to???
 	shipContext.initFromOBJ(shipModel);
 	sphereContext.initFromOBJ(sphereModel);
 }
@@ -203,7 +256,7 @@ void shutdown()
 	shaderLoader.DeleteProgram(program);
 	shaderLoader.DeleteProgram(programSunTexturing);
 	shaderLoader.DeleteProgram(programTexturing);
-	shaderLoader.DeleteProgram(proceduralShadingShip);
+	shaderLoader.DeleteProgram(programProceduralTexturing);
 }
 
 /*
