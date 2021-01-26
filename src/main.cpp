@@ -138,10 +138,16 @@ void renderScene()
 	glUseProgram(program);
 	glUniform3f(glGetUniformLocation(program, "lightPos"), 0, 0, 0);
 	glUniform3f(glGetUniformLocation(program, "cameraPos"), cameraPos.x, cameraPos.y, cameraPos.z);
+	glUniform3f(glGetUniformLocation(programTex, "light[0].position"), cameraPos.x, cameraPos.y, cameraPos.z);
+	glUniform3f(glGetUniformLocation(programTex, "light[0].direction"), cameraDir.x, cameraDir.y, cameraDir.z);
+	glUniform1f(glGetUniformLocation(programTex, "light[0].cutOff"), glm::cos(glm::radians(12.5f)));
 
 	glUseProgram(programTex);
 	glUniform3f(glGetUniformLocation(programTex, "lightPos"), 0, 0, 0);
 	glUniform3f(glGetUniformLocation(programTex, "cameraPos"), cameraPos.x, cameraPos.y, cameraPos.z);
+	glUniform3f(glGetUniformLocation(programTex, "light[0].position"), cameraPos.x, cameraPos.y, cameraPos.z);
+	glUniform3f(glGetUniformLocation(programTex, "light[0].direction"), cameraDir.x, cameraDir.y, cameraDir.z);
+	glUniform1f(glGetUniformLocation(programTex, "light[0].cutOff"), glm::cos(glm::radians(12.5f)));
 
 	glUseProgram(statekProc);
 	glUniform3f(glGetUniformLocation(statekProc, "lightPos"), 0, 0, 0);
