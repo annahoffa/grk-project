@@ -141,6 +141,7 @@ void renderScene()
 	glUniform3f(glGetUniformLocation(program, "spotlightPos"), cameraPos.x, cameraPos.y, cameraPos.z);
 	glUniform3f(glGetUniformLocation(program, "spotlightDir"), cameraDir.x, cameraDir.y, cameraDir.z);
 	glUniform1f(glGetUniformLocation(program, "spotlightCutOff"), glm::cos(glm::radians(12.5f)));
+	glUniform1f(glGetUniformLocation(program, "spotlightOuterCutOff"), glm::cos(glm::radians(17.5f)));
 
 	glUseProgram(programTex);
 	glUniform3f(glGetUniformLocation(programTex, "lightPos"), 0, 0, 0);
@@ -148,6 +149,7 @@ void renderScene()
 	glUniform3f(glGetUniformLocation(programTex, "spotlightPos"), cameraPos.x, cameraPos.y, cameraPos.z);
 	glUniform3f(glGetUniformLocation(programTex, "spotlightDir"), cameraDir.x, cameraDir.y, cameraDir.z);
 	glUniform1f(glGetUniformLocation(programTex, "spotlightCutOff"), glm::cos(glm::radians(12.5f)));
+	glUniform1f(glGetUniformLocation(programTex, "spotlightOuterCutOff"), glm::cos(glm::radians(17.5f)));
 
 	glUseProgram(statekProc);	
 	glUniform3f(glGetUniformLocation(statekProc, "lightPos"), 0, 0, 0);
