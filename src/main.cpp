@@ -48,6 +48,7 @@ Core::Shader_Loader shaderLoader;
 Core::RenderContext shipContext;
 Core::RenderContext sphereContext;
 Core::RenderContext saturnContext;
+Core::RenderContext planeContext;
 
 float cameraAngle = 0;
 glm::vec3 cameraPos = glm::vec3(0, 0, 7);
@@ -128,6 +129,7 @@ void drawObjectTexture(Core::RenderContext context, glm::mat4 modelMatrix, GLuin
 	glm::mat4 transformation = perspectiveMatrix * cameraMatrix * modelMatrix;
 	glUniformMatrix4fv(glGetUniformLocation(program, "transformation"), 1, GL_FALSE, (float*)&transformation);
 	glUniformMatrix4fv(glGetUniformLocation(program, "modelMatrix"), 1, GL_FALSE, (float*)&modelMatrix);
+	glUniform3f(glGetUniformLocation(program, "lightPos"), 0, 0, 0);
 
 	Core::DrawContext(context);
 	glUseProgram(0);
@@ -143,10 +145,8 @@ void setUpUniforms(GLuint program, glm::mat4 modelMatrix)
 	glUniformMatrix4fv(glGetUniformLocation(program, "modelMatrix"), 1, GL_FALSE, (float*)&modelMatrix);
 }
 
-void drawObjectTextureWithNormalmap(Core::RenderContext context, glm::mat4 modelMatrix, GLuint textureId, GLuint normalmapId)
+void drawObjectTextureWithNormalmap(Core::RenderContext context, glm::mat4 modelMatrix, GLuint textureId, GLuint normalmapId, GLuint program)
 {
-	GLuint program = programNormalmapTexturing;
-
 	glUseProgram(program);
 
 	setUpUniforms(program, modelMatrix);
@@ -154,7 +154,6 @@ void drawObjectTextureWithNormalmap(Core::RenderContext context, glm::mat4 model
 	Core::SetActiveTexture(normalmapId, "normalSampler", program, 1);
 
 	Core::DrawContext(context);
-
 	glUseProgram(0);
 }
 
@@ -173,20 +172,11 @@ void renderScene()
 	glm::mat4 shipInitialTransformation = glm::translate(glm::vec3(0, -0.25f, 0)) * glm::rotate(glm::radians(180.0f), glm::vec3(0, 1, 0)) * glm::rotate(glm::radians(zOffset), glm::vec3(0, 0, 1)) * glm::scale(glm::vec3(0.25f));
 	glm::mat4 shipModelMatrix = glm::translate(cameraPos + cameraDir * 0.5f) * glm::mat4_cast(glm::inverse(rotation)) * shipInitialTransformation;
 
+	// W sumie to po co to?
 	glUseProgram(program);
 	glUniform3f(glGetUniformLocation(program, "lightPos"), 0, 0, 0);
 	glUniform3f(glGetUniformLocation(program, "cameraPos"), cameraPos.x, cameraPos.y, cameraPos.z);
 
-	glUseProgram(programTexturing);
-	glUniform3f(glGetUniformLocation(programTexturing, "lightPos"), 0, 0, 0);
-	glUniform3f(glGetUniformLocation(programTexturing, "cameraPos"), cameraPos.x, cameraPos.y, cameraPos.z);
-
-	glUseProgram(programProceduralTexturing);
-	glUniform3f(glGetUniformLocation(programProceduralTexturing, "lightPos"), 0, 0, 0);
-	glUniform3f(glGetUniformLocation(programProceduralTexturing, "cameraPos"), cameraPos.x, cameraPos.y, cameraPos.z);
-
-	glUseProgram(programSunTexturing);
-	glUniform3f(glGetUniformLocation(programSunTexturing, "cameraPos"), cameraPos.x, cameraPos.y, cameraPos.z);
 
 	drawObject(shipContext, shipModelMatrix, glm::vec3(0.6f), programProceduralTexturing);
 
@@ -197,16 +187,15 @@ void renderScene()
 	// Venus
 	drawObjectTexture(sphereContext, T::orbitalSpeed(150) * glm::translate(glm::vec3(2.f, 0.f, 0.f)) * T::scaling(0.30), textureVenus, programTexturing);
 	// Earth
-	//drawObjectTexture(sphereContext, T::orbitalSpeed(120) * glm::translate(glm::vec3(3.f, 0.f, 0.f)) * T::scaling(0.35), textureEarth, programTexturing);
-	drawObjectTextureWithNormalmap(sphereContext, glm::translate(glm::vec3(0, 0, 0)), textureEarth, normalmapEarth);
+	drawObjectTextureWithNormalmap(sphereContext, glm::translate(glm::vec3(3.f, 0.f, 0.f)), textureEarth, normalmapEarth, programNormalmapTexturing);
 	// Moon
-	drawObject(sphereContext, T::orbitalSpeed(120) * glm::translate(glm::vec3(3.f, 0.f, 0.f)) * T::moonRotation(65, 0.005) * glm::translate(glm::vec3(0.5f, 0.f, 0.f)) * T::scaling(0.05), glm::vec3(0.3), program);
+	//drawObject(sphereContext, T::orbitalSpeed(120) * glm::translate(glm::vec3(3.f, 0.f, 0.f)) * T::moonRotation(65, 0.005) * glm::translate(glm::vec3(0.5f, 0.f, 0.f)) * T::scaling(0.05), glm::vec3(0.3), program);
 	// Comet
-	drawObjectTexture(sphereContext, T::cometRotation(200, glm::vec3(1.f, -0.5f, 0.7f)) * glm::translate(glm::vec3(0.f, 4.f, 0.f)) * T::scaling(0.20), textureComet, programTexturing);
+	//drawObjectTexture(sphereContext, T::cometRotation(200, glm::vec3(1.f, -0.5f, 0.7f)) * glm::translate(glm::vec3(0.f, 4.f, 0.f)) * T::scaling(0.20), textureComet, programTexturing);
 
 	
 	//drawObjectTextureWithNormalmap(&planeModel, glm::translate(glm::vec3(-3, 0, 0)) * glm::scale(glm::vec3(1, 0.5, 0.5)), textureTest, normalmapTest);
-	//drawObjectTextureWithNormalmap(&planeModel, glm::translate(glm::vec3(-3, 0, 0)) * glm::scale(glm::vec3(1, 0.5, 0.5)), textureTest, normalmapTest);
+	drawObjectTextureWithNormalmap(planeContext, glm::translate(glm::vec3(-3, 0, 0)) * glm::scale(glm::vec3(1, 0.5, 0.5)), textureTest, normalmapTest, programNormalmapTexturing);
 
 	/*
 	// Code to check fps (simply uncomment to use)
@@ -225,6 +214,7 @@ void renderScene()
 void init()
 {
 	glEnable(GL_DEPTH_TEST);
+
 	program = shaderLoader.CreateProgram("shaders/shader.vert", "shaders/shader.frag");
 	programSunTexturing = shaderLoader.CreateProgram("shaders/sun.vert", "shaders/sun.frag");
 	programTexturing = shaderLoader.CreateProgram("shaders/shader_tex.vert", "shaders/shader_tex.frag");
@@ -246,9 +236,9 @@ void init()
 	normalmapAsteroid = Core::LoadTexture("textures/asteroid_normals.png");
 	normalmapTest = Core::LoadTexture("textures/test_normals.png");
 
-	// po co to???
 	shipContext.initFromOBJ(shipModel);
 	sphereContext.initFromOBJ(sphereModel);
+	planeContext.initFromOBJ(planeModel);
 }
 
 void shutdown()
