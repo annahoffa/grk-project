@@ -12,6 +12,7 @@
 #include "Camera.h"
 #include "Box.cpp"
 #include "transformations.h"
+#include "skybox.h"
 
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
@@ -130,6 +131,9 @@ void renderScene()
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glClearColor(0.0f, 0.3f, 0.3f, 1.0f);
 
+
+
+
 	// Macierz statku "przyczepia" go do kamery.
 	//glm::mat4 shipModelMatrix = glm::translate(cameraPos + cameraDir * 0.5f + glm::vec3(0, -0.25f, 0)) * glm::rotate(-cameraAngle + glm::radians(90.0f), glm::vec3(0, 1, 0)) * glm::scale(glm::vec3(0.25f));
 	glm::mat4 shipInitialTransformation = glm::translate(glm::vec3(0, -0.25f, 0)) * glm::rotate(glm::radians(180.0f), glm::vec3(0, 1, 0)) * glm::rotate(glm::radians(zOffset), glm::vec3(0, 0, 1)) * glm::scale(glm::vec3(0.25f));
@@ -165,6 +169,8 @@ void renderScene()
 	// Comet
 	drawObjectTexture(sphereContext, T::cometRotation(200, glm::vec3(1.f, -0.5f, 0.7f)) * glm::translate(glm::vec3(0.f, 4.f, 0.f)) * T::scaling(0.20), texComet, programTex);
 
+	renderSkybox();
+
 	/*
 	// Code to check fps (simply uncomment to use)
 	myframe++;
@@ -196,6 +202,8 @@ void init()
 	shipModel = obj::loadModelFromFile("models/spaceship.obj");
 	shipContext.initFromOBJ(shipModel);
 	sphereContext.initFromOBJ(sphereModel);
+
+	initializeSkybox();
 }
 
 void shutdown()
@@ -204,6 +212,7 @@ void shutdown()
 	shaderLoader.DeleteProgram(programSunTex);
 	shaderLoader.DeleteProgram(programTex);
 	shaderLoader.DeleteProgram(statekProc);
+	deleteSkybox();
 }
 
 /*
