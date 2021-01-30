@@ -24,6 +24,5 @@ namespace Core
 			char* FragmentShaderFilename);
 
 		void DeleteProgram(GLuint program);
-
 	};
 }

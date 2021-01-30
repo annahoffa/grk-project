@@ -1,11 +1,24 @@
 #pragma once
 
-//TODO: dodać globalne zmienne ze skyboxa, ex.: extern <typ> globalVar;
+#include "glew.h"
+#include "freeglut.h"
+#include "glm.hpp"
+#include "ext.hpp"
+#include "Texture.h"
+#include "Shader_Loader.h"
+#include "Render_Utils.h"
+#include "stb_image.h"
+#include <vector>
+
+#include "Shader.h"
 
 
-void initializeSkybox();
-void renderSkybox();
-void deleteSkybox();
+namespace grk {
 
-unsigned int loadTexture(char const * path)
-unsigned int loadCubemap(vector<std::string> faces);
+	void initializeSkybox(Core::Shader_Loader loader);
+	void renderSkybox(glm::mat4 cameraMatrix, glm::mat4 projectionMatrix);
+	void deleteSkybox();
+
+	//unsigned int loadTexture(char const* path);
+	//unsigned int loadCubemap(vector<std::string> faces);
+}
