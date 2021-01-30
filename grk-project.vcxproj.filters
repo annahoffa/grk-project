@@ -56,6 +56,12 @@
     <ClCompile Include="src\transformations.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\skybox.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Shader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\stb_image.h">
@@ -86,6 +92,12 @@
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="src\transformations.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\skybox.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Shader.h">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>
