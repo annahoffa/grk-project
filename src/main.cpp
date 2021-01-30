@@ -137,7 +137,8 @@ void drawObjectTexture(Core::RenderContext context, glm::mat4 modelMatrix, GLuin
 
 void setUpUniforms(GLuint program, glm::mat4 modelMatrix)
 {
-	glUniform3f(glGetUniformLocation(program, "lightDir"), lightDir.x, lightDir.y, lightDir.z);
+	//glUniform3f(glGetUniformLocation(program, "lightDir"), lightDir.x, lightDir.y, lightDir.z);
+	glUniform3f(glGetUniformLocation(program, "lightDir"), 0, 0, 0); // aka LightPos ( (0,0,0) czyli pozycja Slonca w naszym ukladzie) ale z pozostawiona nazwa lightDir zeby za duzo nie zmieniac w shaderach
 	glUniform3f(glGetUniformLocation(program, "cameraPos"), cameraPos.x, cameraPos.y, cameraPos.z);
 
 	glm::mat4 transformation = perspectiveMatrix * cameraMatrix * modelMatrix;
