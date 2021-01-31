@@ -18,7 +18,4 @@ namespace grk {
 	void initializeSkybox(Core::Shader_Loader loader);
 	void renderSkybox(glm::mat4 cameraMatrix, glm::mat4 projectionMatrix);
 	void deleteSkybox();
-
-	//unsigned int loadTexture(char const* path);
-	//unsigned int loadCubemap(vector<std::string> faces);
 }
