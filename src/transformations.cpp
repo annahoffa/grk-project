@@ -1,6 +1,6 @@
 #include "transformations.h"
 
-namespace T
+namespace grk
 {
 	glm::mat4 orbitalSpeed(float angle)
 	{

@@ -10,7 +10,6 @@
 #include "Shader_Loader.h"
 #include "Render_Utils.h"
 #include "Camera.h"
-#include "Box.cpp"
 #include "transformations.h"
 #include "skybox.h"
 #include "Shader.h"
@@ -28,19 +27,22 @@ namespace grk {
 	float windowWidth = 600.0;
 	float windowHeight = 600.0;
 
+	// Shaders
 	Shader program;
-	Shader programSunTex;
-	Shader programTex;
-	Shader statekProc;
+	Shader programSunTexturing;
+	Shader programTexturing;
+	Shader programProceduralTexturing;	//  for spaceship
 
-	GLuint texSun, texMercury, texVenus, texEarth, texMars, texComet;
-
-	Core::Shader_Loader shaderLoader;
+	// Objects
 	obj::Model shipModel;
 	obj::Model sphereModel;
+
+	// Textures
+	GLuint textureSun, textureMercury, textureVenus, textureEarth, textureComet;
+
+	Core::Shader_Loader shaderLoader;
 	Core::RenderContext shipContext;
 	Core::RenderContext sphereContext;
-	Core::RenderContext saturnContext;
 
 	float cameraAngle = 0;
 	glm::vec3 cameraPos = glm::vec3(0, 0, 7);
@@ -157,33 +159,34 @@ namespace grk {
 		glUniform3f(program.getUniform("lightPos"), 0, 0, 0);
 		glUniform3f(program.getUniform("cameraPos"), cameraPos.x, cameraPos.y, cameraPos.z);
 
-		programTex.use();
-		glUniform3f(programTex.getUniform("lightPos"), 0, 0, 0);
-		glUniform3f(programTex.getUniform("cameraPos"), cameraPos.x, cameraPos.y, cameraPos.z);
+		programTexturing.use();
+		glUniform3f(programTexturing.getUniform("lightPos"), 0, 0, 0);
+		glUniform3f(programTexturing.getUniform("cameraPos"), cameraPos.x, cameraPos.y, cameraPos.z);
 
-		statekProc.use();
-		glUniform3f(statekProc.getUniform("lightPos"), 0, 0, 0);
-		glUniform3f(statekProc.getUniform("cameraPos"), cameraPos.x, cameraPos.y, cameraPos.z);
+		programProceduralTexturing.use();
+		glUniform3f(programProceduralTexturing.getUniform("lightPos"), 0, 0, 0);
+		glUniform3f(programProceduralTexturing.getUniform("cameraPos"), cameraPos.x, cameraPos.y, cameraPos.z);
 
-		programSunTex.use();
-		glUniform3f(programSunTex.getUniform("cameraPos"), cameraPos.x, cameraPos.y, cameraPos.z);
+		programSunTexturing.use();
+		glUniform3f(programSunTexturing.getUniform("cameraPos"), cameraPos.x, cameraPos.y, cameraPos.z);
 
-		drawObject(shipContext, shipModelMatrix, glm::vec3(0.6f), statekProc);
+		drawObject(shipContext, shipModelMatrix, glm::vec3(0.6f), programProceduralTexturing);
 
 		// Sun
-		drawObjectTexture(sphereContext, glm::translate(glm::vec3(0, 0, 0)) * glm::scale(glm::vec3(0.95, 0.95, 0.95)), texSun, programSunTex);
+		drawObjectTexture(sphereContext, glm::translate(glm::vec3(0, 0, 0)) * glm::scale(glm::vec3(0.95, 0.95, 0.95)), textureSun, programSunTexturing);
 		// Mercury
-		drawObjectTexture(sphereContext, T::orbitalSpeed(300) * glm::translate(glm::vec3(1.5f, 0.f, 0.f)) * T::scaling(0.20), texMercury, programTex);
+		drawObjectTexture(sphereContext, orbitalSpeed(300) * glm::translate(glm::vec3(1.5f, 0.f, 0.f)) * scaling(0.20), textureMercury, programTexturing);
 		// Venus
-		drawObjectTexture(sphereContext, T::orbitalSpeed(150) * glm::translate(glm::vec3(2.f, 0.f, 0.f)) * T::scaling(0.30), texVenus, programTex);
+		drawObjectTexture(sphereContext, orbitalSpeed(150) * glm::translate(glm::vec3(2.f, 0.f, 0.f)) * scaling(0.30), textureVenus, programTexturing);
 		// Earth
-		drawObjectTexture(sphereContext, T::orbitalSpeed(120) * glm::translate(glm::vec3(3.f, 0.f, 0.f)) * T::scaling(0.35), texEarth, programTex);
+		drawObjectTexture(sphereContext, orbitalSpeed(120) * glm::translate(glm::vec3(3.f, 0.f, 0.f)) * scaling(0.35), textureEarth, programTexturing);
 		// Moon
-		drawObject(sphereContext, T::orbitalSpeed(120) * glm::translate(glm::vec3(3.f, 0.f, 0.f)) * T::moonRotation(65, 0.005) * glm::translate(glm::vec3(0.5f, 0.f, 0.f)) * T::scaling(0.05), glm::vec3(0.3), program);
+		drawObject(sphereContext, orbitalSpeed(120) * glm::translate(glm::vec3(3.f, 0.f, 0.f)) * moonRotation(65, 0.005) * glm::translate(glm::vec3(0.5f, 0.f, 0.f)) * scaling(0.05), glm::vec3(0.3), program);
 		// Comet
-		drawObjectTexture(sphereContext, T::cometRotation(200, glm::vec3(1.f, -0.5f, 0.7f)) * glm::translate(glm::vec3(0.f, 4.f, 0.f)) * T::scaling(0.20), texComet, programTex);
+		drawObjectTexture(sphereContext, cometRotation(200, glm::vec3(1.f, -0.5f, 0.7f)) * glm::translate(glm::vec3(0.f, 4.f, 0.f)) * scaling(0.20), textureComet, programTexturing);
 
 		renderSkybox(cameraMatrix, perspectiveMatrix);
+
 
 		/*
 		// Code to check fps (simply uncomment to use)
@@ -202,18 +205,21 @@ namespace grk {
 	void init()
 	{
 		glEnable(GL_DEPTH_TEST);
-		program.load(shaderLoader, "shaders/shader.vert", "shaders/shader.frag");
-		programSunTex.load(shaderLoader, "shaders/sun.vert", "shaders/sun.frag");
-		programTex.load(shaderLoader, "shaders/shader_tex.vert", "shaders/shader_tex.frag");
-		statekProc.load(shaderLoader, "shaders/shader_proc_tex.vert", "shaders/shader_proc_tex.frag");
 
-		texSun = Core::LoadTexture("textures/sun.png");
-		texEarth = Core::LoadTexture("textures/earth.png");
-		texMercury = Core::LoadTexture("textures/mercury.png");
-		texVenus = Core::LoadTexture("textures/venus.png");
-		texComet = Core::LoadTexture("textures/comet.png");
+		program.load(shaderLoader, "shaders/shader.vert", "shaders/shader.frag");
+		programSunTexturing.load(shaderLoader, "shaders/sun.vert", "shaders/sun.frag");
+		programTexturing.load(shaderLoader, "shaders/shader_tex.vert", "shaders/shader_tex.frag");
+		programProceduralTexturing.load(shaderLoader, "shaders/shader_proc_tex.vert", "shaders/shader_proc_tex.frag");
+
 		sphereModel = obj::loadModelFromFile("models/sphere.obj");
 		shipModel = obj::loadModelFromFile("models/spaceship.obj");
+
+		textureSun = Core::LoadTexture("textures/sun.png");
+		textureEarth = Core::LoadTexture("textures/earth.png");
+		textureMercury = Core::LoadTexture("textures/mercury.png");
+		textureVenus = Core::LoadTexture("textures/venus.png");
+		textureComet = Core::LoadTexture("textures/comet.png");
+		
 		shipContext.initFromOBJ(shipModel);
 		sphereContext.initFromOBJ(sphereModel);
 
@@ -223,9 +229,9 @@ namespace grk {
 	void shutdown()
 	{
 		shaderLoader.DeleteProgram(program.getShader());
-		shaderLoader.DeleteProgram(programSunTex.getShader());
-		shaderLoader.DeleteProgram(programTex.getShader());
-		shaderLoader.DeleteProgram(statekProc.getShader());
+		shaderLoader.DeleteProgram(programSunTexturing.getShader());
+		shaderLoader.DeleteProgram(programTexturing.getShader());
+		shaderLoader.DeleteProgram(programProceduralTexturing.getShader());
 
 		deleteSkybox();
 	}
