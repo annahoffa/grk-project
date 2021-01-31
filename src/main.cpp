@@ -148,6 +148,10 @@ void setUpUniforms(GLuint program, glm::mat4 modelMatrix)
 	//glUniform3f(glGetUniformLocation(program, "lightDir"), lightDir.x, lightDir.y, lightDir.z);
 	glUniform3f(glGetUniformLocation(program, "lightPos"), 0, 0, 0); // aka LightPos ( (0,0,0) czyli pozycja Slonca w naszym ukladzie) ale z pozostawiona nazwa lightDir zeby za duzo nie zmieniac w shaderach
 	glUniform3f(glGetUniformLocation(program, "cameraPos"), cameraPos.x, cameraPos.y, cameraPos.z);
+	glUniform3f(glGetUniformLocation(program, "spotlightPos"), cameraPos.x, cameraPos.y, cameraPos.z);
+	glUniform3f(glGetUniformLocation(program, "spotlightDir"), cameraDir.x, cameraDir.y, cameraDir.z);
+	glUniform1f(glGetUniformLocation(program, "spotlightCutOff"), glm::cos(glm::radians(12.5f)));
+	glUniform1f(glGetUniformLocation(program, "spotlightOuterCutOff"), glm::cos(glm::radians(17.5f)));
 
 	glm::mat4 transformation = perspectiveMatrix * cameraMatrix * modelMatrix;
 	glUniformMatrix4fv(glGetUniformLocation(program, "modelViewProjectionMatrix"), 1, GL_FALSE, (float*)&transformation);
@@ -203,7 +207,7 @@ void renderScene()
 
 	
 	//drawObjectTextureWithNormalmap(&planeModel, glm::translate(glm::vec3(-3, 0, 0)) * glm::scale(glm::vec3(1, 0.5, 0.5)), textureTest, normalmapTest);
-	drawObjectTextureWithNormalmap(planeContext, glm::translate(glm::vec3(-3, 0, 0)) * glm::scale(glm::vec3(1, 0.5, 0.5)), textureTest, normalmapTest, programNormalmapTexturing);
+	drawObjectTextureWithNormalmap(planeContext, glm::translate(glm::vec3(0, 0, -3)) * glm::scale(glm::vec3(1, 0.5, 0.5)), textureTest, normalmapTest, programNormalmapTexturing);
 
 	/*
 	// Code to check fps (simply uncomment to use)
