@@ -149,19 +149,27 @@ namespace grk {
 		glClearColor(0.0f, 0.3f, 0.3f, 1.0f);
 
 
-
 		// Macierz statku "przyczepia" go do kamery.
 		//glm::mat4 shipModelMatrix = glm::translate(cameraPos + cameraDir * 0.5f + glm::vec3(0, -0.25f, 0)) * glm::rotate(-cameraAngle + glm::radians(90.0f), glm::vec3(0, 1, 0)) * glm::scale(glm::vec3(0.25f));
 		glm::mat4 shipInitialTransformation = glm::translate(glm::vec3(0, -0.25f, 0)) * glm::rotate(glm::radians(180.0f), glm::vec3(0, 1, 0)) * glm::rotate(glm::radians(zOffset), glm::vec3(0, 0, 1)) * glm::scale(glm::vec3(0.25f));
 		glm::mat4 shipModelMatrix = glm::translate(cameraPos + cameraDir * 0.5f) * glm::mat4_cast(glm::inverse(rotation)) * shipInitialTransformation;
 
+
 		program.use();
 		glUniform3f(program.getUniform("lightPos"), 0, 0, 0);
 		glUniform3f(program.getUniform("cameraPos"), cameraPos.x, cameraPos.y, cameraPos.z);
+		glUniform3f(program.getUniform("spotlightPos"), cameraPos.x, cameraPos.y, cameraPos.z);
+		glUniform3f(program.getUniform("spotlightDir"), cameraDir.x, cameraDir.y, cameraDir.z);
+		glUniform1f(program.getUniform("spotlightCutOff"), glm::cos(glm::radians(12.5f)));
+		glUniform1f(program.getUniform("spotlightOuterCutOff"), glm::cos(glm::radians(17.5f)));
 
 		programTexturing.use();
 		glUniform3f(programTexturing.getUniform("lightPos"), 0, 0, 0);
 		glUniform3f(programTexturing.getUniform("cameraPos"), cameraPos.x, cameraPos.y, cameraPos.z);
+		glUniform3f(programTexturing.getUniform("spotlightPos"), cameraPos.x, cameraPos.y, cameraPos.z);
+		glUniform3f(programTexturing.getUniform("spotlightDir"), cameraDir.x, cameraDir.y, cameraDir.z);
+		glUniform1f(programTexturing.getUniform("spotlightCutOff"), glm::cos(glm::radians(12.5f)));
+		glUniform1f(programTexturing.getUniform("spotlightOuterCutOff"), glm::cos(glm::radians(17.5f)));
 
 		programProceduralTexturing.use();
 		glUniform3f(programProceduralTexturing.getUniform("lightPos"), 0, 0, 0);
