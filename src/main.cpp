@@ -190,7 +190,8 @@ void renderScene()
 	glUniform3f(glGetUniformLocation(program, "lightPos"), 0, 0, 0);
 	glUniform3f(glGetUniformLocation(program, "cameraPos"), cameraPos.x, cameraPos.y, cameraPos.z);
 
-	drawObject(shipContext, shipModelMatrix, glm::vec3(0.6f), programProceduralTexturing);
+	//drawObject(shipContext, shipModelMatrix, glm::vec3(0.6f), programProceduralTexturing);
+	drawObjectTextureWithNormalmap(shipContext, shipModelMatrix, textureShip, normalmapShip, programNormalmapTexturing);
 
 	// Sun
 	drawObjectTexture(sphereContext, glm::translate(glm::vec3(0, 0, 0)) * glm::scale(glm::vec3(0.95, 0.95, 0.95)), textureSun, programSunTexturing);

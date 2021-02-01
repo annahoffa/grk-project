@@ -43,7 +43,7 @@ void main()
 	//dotąd by mieć zepsutą latarkę U.U
 	
 	float ambient = 0.2;
-	 gl_FragColor = vec4(mix(color, shadedColor, 1.0 - ambient)
+	 gl_FragColor = vec4(mix(color, shadedColor, 1.0 - ambient), 1.0);
 	 // gl_FragColor = vec4(mix(color, shadedColor, 1.0 - ambient) + mix(color, S_shadedColor, 1.0 - ambient), 1.0);
 	//gl_FragColor = vec4((shadedColor + S_shadedColor), 1.0);
 }
