@@ -133,6 +133,7 @@ void drawObjectTexture(Core::RenderContext context, glm::mat4 modelMatrix, GLuin
 	glm::mat4 transformation = perspectiveMatrix * cameraMatrix * modelMatrix;
 	glUniformMatrix4fv(glGetUniformLocation(program, "transformation"), 1, GL_FALSE, (float*)&transformation);
 	glUniformMatrix4fv(glGetUniformLocation(program, "modelMatrix"), 1, GL_FALSE, (float*)&modelMatrix);
+
 	glUniform3f(glGetUniformLocation(program, "lightPos"), 0, 0, 0);
 	glUniform3f(glGetUniformLocation(program, "spotlightPos"), cameraPos.x, cameraPos.y, cameraPos.z);
 	glUniform3f(glGetUniformLocation(program, "spotlightDir"), cameraDir.x, cameraDir.y, cameraDir.z);
@@ -146,7 +147,7 @@ void drawObjectTexture(Core::RenderContext context, glm::mat4 modelMatrix, GLuin
 void setUpUniforms(GLuint program, glm::mat4 modelMatrix)
 {
 	//glUniform3f(glGetUniformLocation(program, "lightDir"), lightDir.x, lightDir.y, lightDir.z);
-	glUniform3f(glGetUniformLocation(program, "lightPos"), 0, 0, 0); // aka LightPos ( (0,0,0) czyli pozycja Slonca w naszym ukladzie) ale z pozostawiona nazwa lightDir zeby za duzo nie zmieniac w shaderach
+	glUniform3f(glGetUniformLocation(program, "lightPos"), 0, 0, 0);
 	glUniform3f(glGetUniformLocation(program, "cameraPos"), cameraPos.x, cameraPos.y, cameraPos.z);
 	glUniform3f(glGetUniformLocation(program, "spotlightPos"), cameraPos.x, cameraPos.y, cameraPos.z);
 	glUniform3f(glGetUniformLocation(program, "spotlightDir"), cameraDir.x, cameraDir.y, cameraDir.z);
@@ -185,12 +186,22 @@ void renderScene()
 	glm::mat4 shipInitialTransformation = glm::translate(glm::vec3(0, -0.25f, 0)) * glm::rotate(glm::radians(180.0f), glm::vec3(0, 1, 0)) * glm::rotate(glm::radians(zOffset), glm::vec3(0, 0, 1)) * glm::scale(glm::vec3(0.25f));
 	glm::mat4 shipModelMatrix = glm::translate(cameraPos + cameraDir * 0.5f) * glm::mat4_cast(glm::inverse(rotation)) * shipInitialTransformation;
 
-	// W sumie to po co to?
 	glUseProgram(program);
 	glUniform3f(glGetUniformLocation(program, "lightPos"), 0, 0, 0);
 	glUniform3f(glGetUniformLocation(program, "cameraPos"), cameraPos.x, cameraPos.y, cameraPos.z);
 
-	//drawObject(shipContext, shipModelMatrix, glm::vec3(0.6f), programProceduralTexturing);
+	glUseProgram(programTexturing);
+	glUniform3f(glGetUniformLocation(programTexturing, "lightPos"), 0, 0, 0);
+	glUniform3f(glGetUniformLocation(programTexturing, "cameraPos"), cameraPos.x, cameraPos.y, cameraPos.z);
+
+	glUseProgram(programProceduralTexturing);
+	glUniform3f(glGetUniformLocation(programProceduralTexturing, "lightPos"), 0, 0, 0);
+	glUniform3f(glGetUniformLocation(programProceduralTexturing, "cameraPos"), cameraPos.x, cameraPos.y, cameraPos.z);
+
+	glUseProgram(programSunTexturing);
+	glUniform3f(glGetUniformLocation(programSunTexturing, "cameraPos"), cameraPos.x, cameraPos.y, cameraPos.z);
+	
+
 	drawObjectTextureWithNormalmap(shipContext, shipModelMatrix, textureShip, normalmapShip, programNormalmapTexturing);
 
 	// Sun
@@ -205,9 +216,7 @@ void renderScene()
 	//drawObject(sphereContext, T::orbitalSpeed(120) * glm::translate(glm::vec3(3.f, 0.f, 0.f)) * T::moonRotation(65, 0.005) * glm::translate(glm::vec3(0.5f, 0.f, 0.f)) * T::scaling(0.05), glm::vec3(0.3), program);
 	// Comet
 	//drawObjectTexture(sphereContext, T::cometRotation(200, glm::vec3(1.f, -0.5f, 0.7f)) * glm::translate(glm::vec3(0.f, 4.f, 0.f)) * T::scaling(0.20), textureComet, programTexturing);
-
-	
-	//drawObjectTextureWithNormalmap(&planeModel, glm::translate(glm::vec3(-3, 0, 0)) * glm::scale(glm::vec3(1, 0.5, 0.5)), textureTest, normalmapTest);
+	// Plane (test)
 	drawObjectTextureWithNormalmap(planeContext, glm::translate(glm::vec3(0, 0, -3)) * glm::scale(glm::vec3(1, 0.5, 0.5)), textureTest, normalmapTest, programNormalmapTexturing);
 
 	/*
@@ -280,7 +289,7 @@ int main(int argc, char** argv)
 	glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
 	glutInitWindowPosition(0, 0);
 	glutInitWindowSize(windowWidth, windowHeight);
-	glutCreateWindow("OpenGL project");
+	mainWindow = glutCreateWindow("OpenGL project");
 	glewInit();
 
 	init();
