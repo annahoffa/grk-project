@@ -28,7 +28,8 @@ void main()
 	vec3 bitangent = vec3(modelMatrix * vec4(vertexBitangent, 0.0));
 	mat3 TBN = transpose(mat3(tangent, bitangent, normal));
 	vec3 viewDir = normalize(cameraPos - fragPos);
-	vec3 lightDir = normalize(fragPos - lightPos);
+	//vec3 lightDir = normalize(fragPos - lightPos);
+	vec3 lightDir = vec3(0,1,0);
 	vec3 spotlightDir = normalize(spotlightPos - fragPos);
 	lightDirTS = TBN * lightDir;
 	viewDirTS = TBN * viewDir;

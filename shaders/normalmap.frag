@@ -15,7 +15,8 @@ void main()
 {
 	
 	vec3 V = normalize(viewDirTS);
-	vec3 normal = (texture2D(normalSampler, interpTexCoord).rgb * 2) - 1;
+	//vec3 normal = (texture2D(normalSampler, interpTexCoord).rgb * 2) - 1;
+	vec3 normal = vec3(0,1,0);
 	vec3 color = texture2D(textureSampler, interpTexCoord).rgb;
 	
 	//Sun

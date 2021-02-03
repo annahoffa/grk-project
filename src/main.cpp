@@ -102,7 +102,7 @@ glm::mat4 createCameraMatrix(float xOffset, float yOffset)
 	cameraDir = glm::inverse(rotation) * glm::vec3(0, 0, -1);
 	cameraSide = glm::inverse(rotation) * glm::vec3(1, 0, 0);
 
-	glutWarpPointer(windowWidth / 2, windowHeight / 2);	// locks cursor inside window
+	//glutWarpPointer(windowWidth / 2, windowHeight / 2);	// locks cursor inside window
 
 	return Core::createViewMatrixQuat(cameraPos, rotation);
 }
@@ -285,8 +285,8 @@ int main(int argc, char** argv)
 
 	init();
 	glutKeyboardFunc(keyboard);
-	glutPassiveMotionFunc(mouse);
-	glutSetCursor(GLUT_CURSOR_NONE);
+	//glutPassiveMotionFunc(mouse);
+	//glutSetCursor(GLUT_CURSOR_NONE);
 	glutDisplayFunc(renderScene);
 	//glutIdleFunc(idle);	// CPU usage goes up to ~99% with this; new solution below
 	timer(0);				// restricts program to ~60 fps
