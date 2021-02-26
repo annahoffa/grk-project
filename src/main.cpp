@@ -13,6 +13,7 @@
 #include "transformations.h"
 #include "skybox.h"
 #include "Shader.h"
+#include "particle_emitter.h"
 
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
@@ -20,6 +21,8 @@
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
+
+# define M_PI 3.14159265358979323846f  /* pi */
 
 namespace grk {
 
@@ -38,11 +41,16 @@ namespace grk {
 	obj::Model sphereModel;
 
 	// Textures
-	GLuint textureSun, textureMercury, textureVenus, textureEarth, textureComet;
+	GLuint textureSun, textureMercury, textureVenus, textureEarth, textureComet, textureParticle;
 
 	Core::Shader_Loader shaderLoader;
 	Core::RenderContext shipContext;
 	Core::RenderContext sphereContext;
+
+	// Particles
+	ParticleEmitter particleEmitter;
+	Shader particleShader;
+	
 
 	float cameraAngle = 0;
 	glm::vec3 cameraPos = glm::vec3(0, 0, 7);
@@ -151,8 +159,9 @@ namespace grk {
 
 		// Macierz statku "przyczepia" go do kamery.
 		//glm::mat4 shipModelMatrix = glm::translate(cameraPos + cameraDir * 0.5f + glm::vec3(0, -0.25f, 0)) * glm::rotate(-cameraAngle + glm::radians(90.0f), glm::vec3(0, 1, 0)) * glm::scale(glm::vec3(0.25f));
+		glm::vec3 shipPosition = cameraPos + cameraDir * 0.5f;
 		glm::mat4 shipInitialTransformation = glm::translate(glm::vec3(0, -0.25f, 0)) * glm::rotate(glm::radians(180.0f), glm::vec3(0, 1, 0)) * glm::rotate(glm::radians(zOffset), glm::vec3(0, 0, 1)) * glm::scale(glm::vec3(0.25f));
-		glm::mat4 shipModelMatrix = glm::translate(cameraPos + cameraDir * 0.5f) * glm::mat4_cast(glm::inverse(rotation)) * shipInitialTransformation;
+		glm::mat4 shipModelMatrix = glm::translate(shipPosition) * glm::mat4_cast(glm::inverse(rotation)) * shipInitialTransformation;
 
 
 		program.use();
@@ -193,7 +202,10 @@ namespace grk {
 		// Comet
 		drawObjectTexture(sphereContext, cometRotation(200, glm::vec3(1.f, -0.5f, 0.7f)) * glm::translate(glm::vec3(0.f, 4.f, 0.f)) * scaling(0.20), textureComet, programTexturing);
 
-		renderSkybox(cameraMatrix, perspectiveMatrix);
+
+		particleEmitter.update(shipPosition, rotation, deltaTime, cameraPos, cameraMatrix, perspectiveMatrix);
+		//particleEmitter.update(emitterPosition, quaternionRotation, deltaTime, cameraPosition, viewMatrix, projectionMatrix);
+		//renderSkybox(cameraMatrix, perspectiveMatrix);
 
 
 		/*
@@ -227,11 +239,15 @@ namespace grk {
 		textureMercury = Core::LoadTexture("textures/mercury.png");
 		textureVenus = Core::LoadTexture("textures/venus.png");
 		textureComet = Core::LoadTexture("textures/comet.png");
-		
+		textureParticle = Core::LoadTexture("textures/particle.png");
+
 		shipContext.initFromOBJ(shipModel);
 		sphereContext.initFromOBJ(sphereModel);
+		
+		particleShader.load(shaderLoader, "shaders/particles.vert", "shaders/particles.frag");
+		particleEmitter.initialize(particleShader, textureParticle, glm::vec3 (0, 0, 0.0001), 0.05, glm::vec3 (0, -0.25, 0.1));
 
-		initializeSkybox(shaderLoader);
+		//initializeSkybox(shaderLoader);
 	}
 
 	void shutdown()
@@ -241,7 +257,7 @@ namespace grk {
 		shaderLoader.DeleteProgram(programTexturing.getShader());
 		shaderLoader.DeleteProgram(programProceduralTexturing.getShader());
 
-		deleteSkybox();
+		//deleteSkybox();
 	}
 
 	/*

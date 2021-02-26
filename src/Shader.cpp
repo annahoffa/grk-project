@@ -22,7 +22,7 @@ namespace grk {
 		glUniform1i(getUniform(uniformName), value);
 	}
 
-	void Shader::setMat4(char* name, glm::mat4& value) {
+	void Shader::setMat4(char* name, glm::mat4 value) {
 		glUniformMatrix4fv(getUniform(name), 1, GL_FALSE, glm::value_ptr(value));
 	}
 }

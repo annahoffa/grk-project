@@ -15,7 +15,7 @@ namespace grk {
 		GLint getUniform(char* name);
 		GLuint getShader();
 		void setInt(char* uniformName, int value);
-		void setMat4(char* name, glm::mat4& value);
+		void setMat4(char* name, glm::mat4 value);
 
 	private:
 		GLuint program;
