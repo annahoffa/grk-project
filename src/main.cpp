@@ -48,7 +48,8 @@ namespace grk {
 	Core::RenderContext sphereContext;
 
 	// Particles
-	ParticleEmitter particleEmitter;
+	ParticleEmitter engineParticleEmitter;
+	ParticleEmitter cometParticleEmitter;
 	Shader particleShader;
 	
 
@@ -200,11 +201,14 @@ namespace grk {
 		// Moon
 		drawObject(sphereContext, orbitalSpeed(120) * glm::translate(glm::vec3(3.f, 0.f, 0.f)) * moonRotation(65, 0.005) * glm::translate(glm::vec3(0.5f, 0.f, 0.f)) * scaling(0.05), glm::vec3(0.3), program);
 		// Comet
-		drawObjectTexture(sphereContext, cometRotation(200, glm::vec3(1.f, -0.5f, 0.7f)) * glm::translate(glm::vec3(0.f, 4.f, 0.f)) * scaling(0.20), textureComet, programTexturing);
+		//drawObjectTexture(sphereContext, cometRotation(200, glm::vec3(1.f, -0.5f, 0.7f)) * glm::translate(glm::vec3(0.f, 4.f, 0.f)) * scaling(0.20), textureComet, programTexturing);
 
 
-		particleEmitter.update(shipPosition, rotation, deltaTime, cameraPos, cameraMatrix, perspectiveMatrix);
-		//particleEmitter.update(emitterPosition, quaternionRotation, deltaTime, cameraPosition, viewMatrix, projectionMatrix);
+		engineParticleEmitter.update(shipPosition, rotation, deltaTime, cameraPos, cameraMatrix, perspectiveMatrix);
+		//engineParticleEmitter.update(emitterPosition, quaternionRotation, deltaTime, cameraPosition, viewMatrix, projectionMatrix);
+
+		//cometParticleEmitter.update(shipPosition, rotation, deltaTime, cameraPos, cameraMatrix, perspectiveMatrix);
+
 		//renderSkybox(cameraMatrix, perspectiveMatrix);
 
 
@@ -245,7 +249,7 @@ namespace grk {
 		sphereContext.initFromOBJ(sphereModel);
 		
 		particleShader.load(shaderLoader, "shaders/particles.vert", "shaders/particles.frag");
-		particleEmitter.initialize(particleShader, textureParticle, glm::vec3 (0, 0, 0.0001), 0.05, glm::vec3 (0, -0.25, 0.1));
+		engineParticleEmitter.initialize(particleShader, textureParticle, glm::vec3 (0, 0, 0.0001), 0.025, glm::vec3 (0, -0.25, 0.1));
 
 		//initializeSkybox(shaderLoader);
 	}

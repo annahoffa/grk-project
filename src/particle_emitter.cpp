@@ -184,11 +184,12 @@ namespace grk {
 
 	void ParticleEmitter::createParticles(glm::vec3 initialPosition, glm::quat rotation) {
 		Particle* newParticle = this->findNextParticle();
-		printVector(initialVelocity);
-		printVector(initialVelocity * rotation);
-		printVector(initialVelocity * rotation * translationOffset);
-		std::cout << std::endl;
-		newParticle->initialize(initialPosition + (translationOffset * rotation), initialVelocity * rotation, 5000);
+		float initialVelocityLength = glm::length(initialVelocity) * 2;
+		glm::vec3 variation;
+		variation.x = (rand() % 100) / 100.0f * initialVelocityLength / 2 - initialVelocityLength / 4;
+		variation.y = (rand() % 100) / 100.0f * initialVelocityLength / 2 - initialVelocityLength / 4;
+		variation.z = (rand() % 100) / 100.0f * initialVelocityLength / 2 - initialVelocityLength / 4;
+		newParticle->initialize(initialPosition + (translationOffset * rotation), (initialVelocity + variation) * rotation, 500);
 		//newParticle->initialize(glm::vec3 (0), glm::vec3 (0.01), 5000);
 	}
 
