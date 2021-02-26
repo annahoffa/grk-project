@@ -332,7 +332,10 @@ using namespace grk;
 int main(int argc, char** argv)
 {
 	glutInit(&argc, argv);
-	glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
+	glutSetOption(GLUT_MULTISAMPLE, 8);
+	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH | GLUT_MULTISAMPLE);
+	//glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
+	glEnable(GL_MULTISAMPLE);
 	glutInitWindowPosition(0, 0);
 	glutInitWindowSize(windowWidth, windowHeight);
 	mainWindow = glutCreateWindow("OpenGL project");
