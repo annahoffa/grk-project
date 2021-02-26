@@ -243,7 +243,7 @@ namespace grk {
 		drawObjectTexture(sphereContext, orbitalSpeed(150) * glm::translate(glm::vec3(2.f, 0.f, 0.f)) * scaling(0.30), textureVenus, programTexturing);
 		// Earth
 		//drawObjectTexture(sphereContext, orbitalSpeed(120) * glm::translate(glm::vec3(3.f, 0.f, 0.f)) * scaling(0.35), textureEarth, programTexturing);
-		drawObjectTextureWithNormalmap(sphereContext, glm::translate(glm::vec3(3.f, 0.f, 0.f)), textureEarth, normalmapEarth, programNormalmapTexturing);
+		drawObjectTextureWithNormalmap(sphereContext, orbitalSpeed(120) * glm::translate(glm::vec3(3.f, 0.f, 0.f)) * scaling(0.35), textureEarth, normalmapEarth, programNormalmapTexturing);
 		// Moon
 		drawObject(sphereContext, orbitalSpeed(120) * glm::translate(glm::vec3(3.f, 0.f, 0.f)) * moonRotation(65, 0.005) * glm::translate(glm::vec3(0.5f, 0.f, 0.f)) * scaling(0.05), glm::vec3(0.3), program);
 		// Comet
