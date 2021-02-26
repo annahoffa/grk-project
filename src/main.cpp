@@ -22,59 +22,66 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
-int mainWindow;
-float windowWidth = 600.0;
-float windowHeight = 600.0;
+# define M_PI 3.14159265358979323846f  /* pi */
 
-GLuint program;
-GLuint programSunTexturing;
-GLuint programTexturing;
-GLuint programProceduralTexturing;	//  for spaceship
-GLuint programNormalmapTexturing;
+namespace grk {
 
-// Objects
-obj::Model planeModel;
-obj::Model shipModel;
-obj::Model sphereModel;
+	int mainWindow;
+	float windowWidth = 600.0;
+	float windowHeight = 600.0;
 
-// Textures
-GLuint textureSun, textureMercury, textureVenus, textureEarth, textureComet;
-GLuint textureTest, textureAsteroid, textureShip;
+	// Shaders
+	Shader program;
+	Shader programSunTexturing;
+	Shader programTexturing;
+	Shader programProceduralTexturing;	//  for spaceship
+	Shader programNormalmapTexturing;
 
-// Normal mapping
-GLuint normalmapShip;
-GLuint normalmapEarth;
-GLuint normalmapAsteroid;
-GLuint normalmapTest;
+	// Objects
+	obj::Model shipModel;
+	obj::Model sphereModel;
 
-Core::Shader_Loader shaderLoader;
-Core::RenderContext shipContext;
-Core::RenderContext sphereContext;
-Core::RenderContext saturnContext;
-Core::RenderContext planeContext;
+	// Textures
+	GLuint textureSun, textureMercury, textureVenus, textureEarth, textureComet, textureParticle;
+	GLuint textureAsteroid, textureShip;
 
-float cameraAngle = 0;
-glm::vec3 cameraPos = glm::vec3(0, 0, 7);
-glm::vec3 cameraDir; // Wektor "do przodu" kamery
-glm::vec3 cameraSide; // Wektor "w bok" kamery
-glm::mat4 cameraMatrix, perspectiveMatrix;
+	// Normal mapping
+	GLuint normalmapShip;
+	GLuint normalmapEarth;
+	GLuint normalmapAsteroid;
+	GLuint normalmapTest;
 
-// grk7 - quaternions and camera movement
-glm::vec3 lightDir = glm::normalize(glm::vec3(1.0f, -0.9f, -1.0f));
-glm::quat rotation = glm::quat(1.f, 0.f, 0.f, 0.f);
-float zOffset = 0.0;
-float xOffset, yOffset;
+	Core::Shader_Loader shaderLoader;
+	Core::RenderContext shipContext;
+	Core::RenderContext sphereContext;
 
-// variables for fps check
-int myframe;
-long mytime, mytimebase;
+	// Particles
+	ParticleEmitter engineParticleEmitter;
+	Shader particleShader;
 
 
-void keyboard(unsigned char key, int x, int y)
-{
-	float angleSpeed = 2.0f;
-	float moveSpeed = 0.1f;
-	switch (key)
+	float cameraAngle = 0;
+	glm::vec3 cameraPos = glm::vec3(0, 0, 7);
+	glm::vec3 cameraDir; // Wektor "do przodu" kamery
+	glm::vec3 cameraSide; // Wektor "w bok" kamery
+	glm::mat4 cameraMatrix, perspectiveMatrix;
+
+	// grk7 - quaternions and camera movement
+	glm::vec3 lightDir = glm::normalize(glm::vec3(1.0f, -0.9f, -1.0f));
+	glm::quat rotation = glm::quat(1.f, 0.f, 0.f, 0.f);
+	float zOffset = 0.0;
+	float xOffset, yOffset;
+
+	// timing
+	float deltaTime = 0.0f;
+	float lastFrame = 0.0f;
+
+	// variables for fps check
+	int myframe;
+	long mytime, mytimebase;
+
+
+	void keyboard(unsigned char key, int x, int y)
 	{
 		float angleSpeed = 2.0f;
 		float moveSpeed = 0.1f;
@@ -119,15 +126,14 @@ void keyboard(unsigned char key, int x, int y)
 		program.use();
 		glUniform3f(program.getUniform("objectColor"), color.x, color.y, color.z);
 
-		glUniformMatrix4fv(glGetUniformLocation(program, "transformation"), 1, GL_FALSE, (float*)&transformation);
-		glUniformMatrix4fv(glGetUniformLocation(program, "modelMatrix"), 1, GL_FALSE, (float*)&modelMatrix);
-		glUniform3f(glGetUniformLocation(program, "spotlightPos"), cameraPos.x, cameraPos.y, cameraPos.z);
-		glUniform3f(glGetUniformLocation(program, "spotlightDir"), cameraDir.x, cameraDir.y, cameraDir.z);
-		glUniform1f(glGetUniformLocation(program, "spotlightCutOff"), glm::cos(glm::radians(12.5f)));
-		glUniform1f(glGetUniformLocation(program, "spotlightOuterCutOff"), glm::cos(glm::radians(17.5f)));
+		glm::mat4 transformation = perspectiveMatrix * cameraMatrix * modelMatrix;
 
 		glUniformMatrix4fv(program.getUniform("transformation"), 1, GL_FALSE, (float*)&transformation);
 		glUniformMatrix4fv(program.getUniform("modelMatrix"), 1, GL_FALSE, (float*)&modelMatrix);
+		glUniform3f(program.getUniform("spotlightPos"), cameraPos.x, cameraPos.y, cameraPos.z);
+		glUniform3f(program.getUniform("spotlightDir"), cameraDir.x, cameraDir.y, cameraDir.z);
+		glUniform1f(program.getUniform("spotlightCutOff"), glm::cos(glm::radians(12.5f)));
+		glUniform1f(program.getUniform("spotlightOuterCutOff"), glm::cos(glm::radians(17.5f)));
 
 		Core::DrawContext(context);
 		glUseProgram(0);
@@ -138,90 +144,46 @@ void keyboard(unsigned char key, int x, int y)
 		program.use();
 		Core::SetActiveTexture(textureID, "colorTexture", program.getShader(), 0);
 
-	glUniform3f(glGetUniformLocation(program, "lightPos"), 0, 0, 0);
-	glUniform3f(glGetUniformLocation(program, "spotlightPos"), cameraPos.x, cameraPos.y, cameraPos.z);
-	glUniform3f(glGetUniformLocation(program, "spotlightDir"), cameraDir.x, cameraDir.y, cameraDir.z);
-	glUniform1f(glGetUniformLocation(program, "spotlightCutOff"), glm::cos(glm::radians(12.5f)));
-	glUniform1f(glGetUniformLocation(program, "spotlightOuterCutOff"), glm::cos(glm::radians(17.5f)));
+		glm::mat4 transformation = perspectiveMatrix * cameraMatrix * modelMatrix;
+		glUniformMatrix4fv(program.getUniform("transformation"), 1, GL_FALSE, (float*)&transformation);
+		glUniformMatrix4fv(program.getUniform("modelMatrix"), 1, GL_FALSE, (float*)&modelMatrix);
 
-	Core::DrawContext(context);
-	glUseProgram(0);
-}
+		glUniform3f(program.getUniform("lightPos"), 0, 0, 0);
+		glUniform3f(program.getUniform("spotlightPos"), cameraPos.x, cameraPos.y, cameraPos.z);
+		glUniform3f(program.getUniform("spotlightDir"), cameraDir.x, cameraDir.y, cameraDir.z);
+		glUniform1f(program.getUniform("spotlightCutOff"), glm::cos(glm::radians(12.5f)));
+		glUniform1f(program.getUniform("spotlightOuterCutOff"), glm::cos(glm::radians(17.5f)));
 
-void setUpUniforms(GLuint program, glm::mat4 modelMatrix)
-{
-	//glUniform3f(glGetUniformLocation(program, "lightDir"), lightDir.x, lightDir.y, lightDir.z);
-	glUniform3f(glGetUniformLocation(program, "lightPos"), 0, 0, 0);
-	glUniform3f(glGetUniformLocation(program, "cameraPos"), cameraPos.x, cameraPos.y, cameraPos.z);
-	glUniform3f(glGetUniformLocation(program, "spotlightPos"), cameraPos.x, cameraPos.y, cameraPos.z);
-	glUniform3f(glGetUniformLocation(program, "spotlightDir"), cameraDir.x, cameraDir.y, cameraDir.z);
-	glUniform1f(glGetUniformLocation(program, "spotlightCutOff"), glm::cos(glm::radians(12.5f)));
-	glUniform1f(glGetUniformLocation(program, "spotlightOuterCutOff"), glm::cos(glm::radians(17.5f)));
+		Core::DrawContext(context);
+		glUseProgram(0);
+	}
 
-	glm::mat4 transformation = perspectiveMatrix * cameraMatrix * modelMatrix;
-	glUniformMatrix4fv(glGetUniformLocation(program, "modelViewProjectionMatrix"), 1, GL_FALSE, (float*)&transformation);
-	glUniformMatrix4fv(glGetUniformLocation(program, "modelMatrix"), 1, GL_FALSE, (float*)&modelMatrix);
-}
+	void setUpUniforms(Shader& program, glm::mat4 modelMatrix)
+	{
+		//glUniform3f(glGetUniformLocation(program, "lightDir"), lightDir.x, lightDir.y, lightDir.z);
+		glUniform3f(program.getUniform("lightPos"), 0, 0, 0);
+		glUniform3f(program.getUniform("cameraPos"), cameraPos.x, cameraPos.y, cameraPos.z);
+		glUniform3f(program.getUniform("spotlightPos"), cameraPos.x, cameraPos.y, cameraPos.z);
+		glUniform3f(program.getUniform("spotlightDir"), cameraDir.x, cameraDir.y, cameraDir.z);
+		glUniform1f(program.getUniform("spotlightCutOff"), glm::cos(glm::radians(12.5f)));
+		glUniform1f(program.getUniform("spotlightOuterCutOff"), glm::cos(glm::radians(17.5f)));
 
-void drawObjectTextureWithNormalmap(Core::RenderContext context, glm::mat4 modelMatrix, GLuint textureId, GLuint normalmapId, GLuint program)
-{
-	glUseProgram(program);
+		glm::mat4 transformation = perspectiveMatrix * cameraMatrix * modelMatrix;
+		glUniformMatrix4fv(program.getUniform("modelViewProjectionMatrix"), 1, GL_FALSE, (float*)&transformation);
+		glUniformMatrix4fv(program.getUniform("modelMatrix"), 1, GL_FALSE, (float*)&modelMatrix);
+	}
 
-	setUpUniforms(program, modelMatrix);
-	Core::SetActiveTexture(textureId, "textureSampler", program, 0);
-	Core::SetActiveTexture(normalmapId, "normalSampler", program, 1);
+	void drawObjectTextureWithNormalmap(Core::RenderContext context, glm::mat4 modelMatrix, GLuint textureId, GLuint normalmapId, Shader& program)
+	{
+		program.use();
 
-	Core::DrawContext(context);
-	glUseProgram(0);
-}
+		setUpUniforms(program, modelMatrix);
+		Core::SetActiveTexture(textureId, "textureSampler", program.getShader(), 0);
+		Core::SetActiveTexture(normalmapId, "normalSampler", program.getShader(), 1);
 
-void renderScene()
-{
-	cameraMatrix = createCameraMatrix(xOffset, yOffset);
-	perspectiveMatrix = Core::createPerspectiveMatrix();
-
-	float time = glutGet(GLUT_ELAPSED_TIME) / 1000.f;
-
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glClearColor(0.0f, 0.3f, 0.3f, 1.0f);
-
-	// Macierz statku "przyczepia" go do kamery.
-	//glm::mat4 shipModelMatrix = glm::translate(cameraPos + cameraDir * 0.5f + glm::vec3(0, -0.25f, 0)) * glm::rotate(-cameraAngle + glm::radians(90.0f), glm::vec3(0, 1, 0)) * glm::scale(glm::vec3(0.25f));
-	glm::mat4 shipInitialTransformation = glm::translate(glm::vec3(0, -0.25f, 0)) * glm::rotate(glm::radians(180.0f), glm::vec3(0, 1, 0)) * glm::rotate(glm::radians(zOffset), glm::vec3(0, 0, 1)) * glm::scale(glm::vec3(0.25f));
-	glm::mat4 shipModelMatrix = glm::translate(cameraPos + cameraDir * 0.5f) * glm::mat4_cast(glm::inverse(rotation)) * shipInitialTransformation;
-
-	glUseProgram(program);
-	glUniform3f(glGetUniformLocation(program, "lightPos"), 0, 0, 0);
-	glUniform3f(glGetUniformLocation(program, "cameraPos"), cameraPos.x, cameraPos.y, cameraPos.z);
-
-	glUseProgram(programTexturing);
-	glUniform3f(glGetUniformLocation(programTexturing, "lightPos"), 0, 0, 0);
-	glUniform3f(glGetUniformLocation(programTexturing, "cameraPos"), cameraPos.x, cameraPos.y, cameraPos.z);
-
-	glUseProgram(programProceduralTexturing);
-	glUniform3f(glGetUniformLocation(programProceduralTexturing, "lightPos"), 0, 0, 0);
-	glUniform3f(glGetUniformLocation(programProceduralTexturing, "cameraPos"), cameraPos.x, cameraPos.y, cameraPos.z);
-
-	glUseProgram(programSunTexturing);
-	glUniform3f(glGetUniformLocation(programSunTexturing, "cameraPos"), cameraPos.x, cameraPos.y, cameraPos.z);
-	
-
-	drawObjectTextureWithNormalmap(shipContext, shipModelMatrix, textureShip, normalmapShip, programNormalmapTexturing);
-
-	// Sun
-	drawObjectTexture(sphereContext, glm::translate(glm::vec3(0, 0, 0)) * glm::scale(glm::vec3(0.95, 0.95, 0.95)), textureSun, programSunTexturing);
-	// Mercury
-	drawObjectTexture(sphereContext, T::orbitalSpeed(300) * glm::translate(glm::vec3(1.5f, 0.f, 0.f)) * T::scaling(0.20), textureMercury, programTexturing);
-	// Venus
-	drawObjectTexture(sphereContext, T::orbitalSpeed(150) * glm::translate(glm::vec3(2.f, 0.f, 0.f)) * T::scaling(0.30), textureVenus, programTexturing);
-	// Earth
-	drawObjectTextureWithNormalmap(sphereContext, glm::translate(glm::vec3(3.f, 0.f, 0.f)), textureEarth, normalmapEarth, programNormalmapTexturing);
-	// Moon
-	//drawObject(sphereContext, T::orbitalSpeed(120) * glm::translate(glm::vec3(3.f, 0.f, 0.f)) * T::moonRotation(65, 0.005) * glm::translate(glm::vec3(0.5f, 0.f, 0.f)) * T::scaling(0.05), glm::vec3(0.3), program);
-	// Comet
-	//drawObjectTexture(sphereContext, T::cometRotation(200, glm::vec3(1.f, -0.5f, 0.7f)) * glm::translate(glm::vec3(0.f, 4.f, 0.f)) * T::scaling(0.20), textureComet, programTexturing);
-	// Plane (test)
-	drawObjectTextureWithNormalmap(planeContext, glm::translate(glm::vec3(0, 0, -3)) * glm::scale(glm::vec3(1, 0.5, 0.5)), textureTest, normalmapTest, programNormalmapTexturing);
+		Core::DrawContext(context);
+		glUseProgram(0);
+	}
 
 	void renderScene()
 	{
@@ -270,7 +232,8 @@ void renderScene()
 		programSunTexturing.use();
 		glUniform3f(programSunTexturing.getUniform("cameraPos"), cameraPos.x, cameraPos.y, cameraPos.z);
 
-		drawObject(shipContext, shipModelMatrix, glm::vec3(0.6f), programProceduralTexturing);
+		//drawObject(shipContext, shipModelMatrix, glm::vec3(0.6f), programProceduralTexturing);
+		drawObjectTextureWithNormalmap(shipContext, shipModelMatrix, textureShip, normalmapShip, programNormalmapTexturing);
 
 		// Sun
 		drawObjectTexture(sphereContext, glm::translate(glm::vec3(0, 0, 0)) * glm::scale(glm::vec3(0.95, 0.95, 0.95)), textureSun, programSunTexturing);
@@ -279,7 +242,8 @@ void renderScene()
 		// Venus
 		drawObjectTexture(sphereContext, orbitalSpeed(150) * glm::translate(glm::vec3(2.f, 0.f, 0.f)) * scaling(0.30), textureVenus, programTexturing);
 		// Earth
-		drawObjectTexture(sphereContext, orbitalSpeed(120) * glm::translate(glm::vec3(3.f, 0.f, 0.f)) * scaling(0.35), textureEarth, programTexturing);
+		//drawObjectTexture(sphereContext, orbitalSpeed(120) * glm::translate(glm::vec3(3.f, 0.f, 0.f)) * scaling(0.35), textureEarth, programTexturing);
+		drawObjectTextureWithNormalmap(sphereContext, glm::translate(glm::vec3(3.f, 0.f, 0.f)), textureEarth, normalmapEarth, programNormalmapTexturing);
 		// Moon
 		drawObject(sphereContext, orbitalSpeed(120) * glm::translate(glm::vec3(3.f, 0.f, 0.f)) * moonRotation(65, 0.005) * glm::translate(glm::vec3(0.5f, 0.f, 0.f)) * scaling(0.05), glm::vec3(0.3), program);
 		// Comet
@@ -315,7 +279,7 @@ void renderScene()
 		programSunTexturing.load(shaderLoader, "shaders/sun.vert", "shaders/sun.frag");
 		programTexturing.load(shaderLoader, "shaders/shader_tex.vert", "shaders/shader_tex.frag");
 		programProceduralTexturing.load(shaderLoader, "shaders/shader_proc_tex.vert", "shaders/shader_proc_tex.frag");
-		programNormalmapTexturing = shaderLoader.CreateProgram("shaders/normalmap.vert", "shaders/normalmap.frag");
+		programNormalmapTexturing.load(shaderLoader, "shaders/normalmap.vert", "shaders/normalmap.frag");
 
 		sphereModel = obj::loadModelFromFile("models/sphere.obj");
 		shipModel = obj::loadModelFromFile("models/spaceship.obj");
@@ -331,12 +295,12 @@ void renderScene()
 		normalmapEarth = Core::LoadTexture("textures/earth_normals.png");
 		normalmapAsteroid = Core::LoadTexture("textures/asteroid_normals.png");
 		normalmapTest = Core::LoadTexture("textures/test_normals.png");
-		
+
 		shipContext.initFromOBJ(shipModel);
 		sphereContext.initFromOBJ(sphereModel);
-		
+
 		particleShader.load(shaderLoader, "shaders/particles.vert", "shaders/particles.frag");
-		engineParticleEmitter.initialize(particleShader, textureParticle, glm::vec3 (0, 0, 0.0001), 0.025, glm::vec3 (0, -0.25, 0.1));
+		engineParticleEmitter.initialize(particleShader, textureParticle, glm::vec3(0, 0, 0.0001), 0.025, glm::vec3(0, -0.25, 0.1));
 
 		initializeSkybox(shaderLoader);
 	}

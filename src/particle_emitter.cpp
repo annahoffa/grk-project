@@ -85,7 +85,6 @@ namespace grk {
 
 		}
 		sortParticles();
-		std::cout << particlesCount << std::endl;
 
 		glBindBuffer(GL_ARRAY_BUFFER, particles_position_buffer);
 		glBufferData(GL_ARRAY_BUFFER, MaxParticles * 4 * sizeof(GLfloat), NULL, GL_STREAM_DRAW);
