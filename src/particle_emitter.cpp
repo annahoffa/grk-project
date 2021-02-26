@@ -74,8 +74,8 @@ namespace grk {
 				g_particle_position_size_data[4 * particlesCount + 3] = size;
 
 				g_particle_color_data[4 * particlesCount + 0] = 255;
-				g_particle_color_data[4 * particlesCount + 1] = 128;
-				g_particle_color_data[4 * particlesCount + 2] = 128;
+				g_particle_color_data[4 * particlesCount + 1] = 200;
+				g_particle_color_data[4 * particlesCount + 2] = 60;
 				g_particle_color_data[4 * particlesCount + 3] = 128;
 
 				particlesCount++;
@@ -107,7 +107,6 @@ namespace grk {
 		// Set our "myTextureSampler" sampler to use Texture Unit 0
 		glUniform1i(textureID, 0);
 
-		// Same as the billboards tutorial
 		glUniform3f(CameraRight_worldspace_ID, viewMatrix[0][0], viewMatrix[1][0], viewMatrix[2][0]);
 		glUniform3f(CameraUp_worldspace_ID, viewMatrix[0][1], viewMatrix[1][1], viewMatrix[2][1]);
 
@@ -151,15 +150,10 @@ namespace grk {
 		);
 
 		// These functions are specific to glDrawArrays*Instanced*.
-		// The first parameter is the attribute buffer we're talking about.
-		// The second parameter is the "rate at which generic vertex attributes advance when rendering multiple instances"
-		// http://www.opengl.org/sdk/docs/man/xhtml/glVertexAttribDivisor.xml
 		glVertexAttribDivisor(0, 0); // particles vertices : always reuse the same 4 vertices -> 0
 		glVertexAttribDivisor(1, 1); // positions : one per quad (its center)                 -> 1
 		glVertexAttribDivisor(2, 1); // color : one per quad                                  -> 1
 
-		// Draw the particules !
-		// This draws many times a small triangle_strip (which looks like a quad).
 		// This is equivalent to :
 		// for(i in ParticlesCount) : glDrawArrays(GL_TRIANGLE_STRIP, 0, 4), 
 		// but faster.

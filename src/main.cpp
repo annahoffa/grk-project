@@ -49,7 +49,6 @@ namespace grk {
 
 	// Particles
 	ParticleEmitter engineParticleEmitter;
-	ParticleEmitter cometParticleEmitter;
 	Shader particleShader;
 	
 
@@ -207,9 +206,8 @@ namespace grk {
 		engineParticleEmitter.update(shipPosition, rotation, deltaTime, cameraPos, cameraMatrix, perspectiveMatrix);
 		//engineParticleEmitter.update(emitterPosition, quaternionRotation, deltaTime, cameraPosition, viewMatrix, projectionMatrix);
 
-		//cometParticleEmitter.update(shipPosition, rotation, deltaTime, cameraPos, cameraMatrix, perspectiveMatrix);
 
-		//renderSkybox(cameraMatrix, perspectiveMatrix);
+		renderSkybox(cameraMatrix, perspectiveMatrix);
 
 
 		/*
@@ -251,7 +249,7 @@ namespace grk {
 		particleShader.load(shaderLoader, "shaders/particles.vert", "shaders/particles.frag");
 		engineParticleEmitter.initialize(particleShader, textureParticle, glm::vec3 (0, 0, 0.0001), 0.025, glm::vec3 (0, -0.25, 0.1));
 
-		//initializeSkybox(shaderLoader);
+		initializeSkybox(shaderLoader);
 	}
 
 	void shutdown()
@@ -261,7 +259,7 @@ namespace grk {
 		shaderLoader.DeleteProgram(programTexturing.getShader());
 		shaderLoader.DeleteProgram(programProceduralTexturing.getShader());
 
-		//deleteSkybox();
+		deleteSkybox();
 	}
 
 	/*
