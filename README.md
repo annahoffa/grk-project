@@ -7,7 +7,6 @@
     - [Skybox](#skybox)
     - [Particles](#particles)
 
-[link text itself]: http://www.reddit.com
 
 
 ## General info
@@ -19,12 +18,10 @@ It features:
 * objects' animations (planets' rotations, etc.)
 * normal mapping (on spaceship, Earth and asteroids)
 * keyboard & mouse control
-* (beautiful[*][skybox credits]) skybox
+* beautiful hi-res skybox ([credits][skybox credits])
 * particle effect (on spaceship engines and the comet's tail)
 * interactiveness (time-attack mode race implementation)
 * "bonus" parts: multisample anti-aliasing (MSAA), 60fps optimization lock, hidden mouse cursor with lock inside window, correct window scaling
-
-Unfortunately this project does not include the physics implementation, nor does it intend to do so. Procedural terrain generation may be added in the future.
 
 [skybox credits]: https://forum.kerbalspaceprogram.com/index.php?/topic/177203-17x-darkfighters-skyboxes-red-spiders/
 
@@ -33,7 +30,7 @@ Unfortunately this project does not include the physics implementation, nor does
 * freeglut
 * objload
 * GLSL
-* GLEW (?)
+* GLEW
 
 
 ## Setup
